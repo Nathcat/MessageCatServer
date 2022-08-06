@@ -1,9 +1,13 @@
 package com.nathcat.messagecat_database_entities;
 
+import org.json.simple.JSONObject;
+
+import java.io.Serializable;
+
 /**
  * Represents a message from the database.
  */
-public class Message {
+public class Message implements Serializable {
     public final int SenderID;
     public final int ChatID;
     public final long TimeSent;
@@ -24,5 +28,15 @@ public class Message {
                 ", TimeSent=" + TimeSent +
                 ", Content='" + Content + '\'' +
                 '}';
+    }
+
+    public JSONObject GetJSONObject() {
+        JSONObject json = new JSONObject();
+        json.put("SenderID", this.SenderID);
+        json.put("ChatID", this.ChatID);
+        json.put("TimeSent", this.TimeSent);
+        json.put("Content", this.Content);
+
+        return json;
     }
 }
