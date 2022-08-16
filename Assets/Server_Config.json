@@ -1,5 +1,0 @@
-{
-  "port": "1234",
-  "maxThreadCount": "100",
-  "maxQueueCapacity": "100"
-}
