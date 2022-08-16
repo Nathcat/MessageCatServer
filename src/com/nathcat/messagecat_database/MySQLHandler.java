@@ -345,6 +345,15 @@ public class MySQLHandler {
     }
 
     /**
+     * Delete a friend request
+     * @param FriendRequestID The ID of the friend request to delete
+     * @throws SQLException Thrown by SQL errors
+     */
+    public void DeleteFriendRequest(int FriendRequestID) throws SQLException {
+        this.Update("DELETE FROM `FriendRequests` WHERE `FriendRequestID` like " + FriendRequestID);
+    }
+
+    /**
      * Get a chat record from the database
      * @param ChatID The ID of the record
      * @return The record found, or null if none are found
@@ -353,6 +362,36 @@ public class MySQLHandler {
     public Chat GetChatByID(int ChatID) throws SQLException {
         // Get the result set from the query
         ResultSet rs = this.Select("SELECT * FROM `Chats` WHERE `ChatID` like " + ChatID);
+
+        // Check if there are no results
+        rs.last();
+        if (rs.getRow() == 0) {
+            return null;
+        }
+
+        // There must be 1 result, since we are searching for a unique value.
+        // Get the data from this 1 result, close the result set, and return the chat.
+        rs.first();
+        Chat result = new Chat(
+                rs.getInt("ChatID"),
+                rs.getString("Name"),
+                rs.getString("Description"),
+                rs.getInt("PublicKeyID")
+        );
+
+        rs.close();
+        return result;
+    }
+
+    /**
+     * Get a chat record from the database by the public key id associated with it
+     * @param PublicKeyID The public key id to search for
+     * @return The Chat that is found
+     * @throws SQLException Thrown by SQL errors
+     */
+    public Chat GetChatByPublicKeyID(int PublicKeyID) throws SQLException {
+        // Get the result set from the query
+        ResultSet rs = this.Select("SELECT * FROM `Chats` WHERE `PublicKeyID` like " + PublicKeyID);
 
         // Check if there are no results
         rs.last();
@@ -476,6 +515,15 @@ public class MySQLHandler {
 
         rs.close();
         return results;
+    }
+
+    /**
+     * Delete a chat invite from the database
+     * @param ChatInviteID The ID of the chat invite
+     * @throws SQLException Thrown by SQL errors
+     */
+    public void DeleteChatInvite(int ChatInviteID) throws SQLException {
+        this.Update("DELETE FROM `ChatInvitations` WHERE `ChatInviteID` like " + ChatInviteID);
     }
 
     /**
