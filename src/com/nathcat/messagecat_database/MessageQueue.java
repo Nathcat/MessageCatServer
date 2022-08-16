@@ -62,4 +62,8 @@ public class MessageQueue implements Serializable {
 
         return result;
     }
+
+    public Object Clone() throws CloneNotSupportedException {
+        return this.clone();
+    }
 }

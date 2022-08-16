@@ -14,7 +14,7 @@ public class MessageStore {
     /**
      * Default constructor
      */
-    public MessageStore() throws Exception {
+    public MessageStore() throws IOException {
         try {
             // Try to read the data file
             data = this.ReadFromFile();
