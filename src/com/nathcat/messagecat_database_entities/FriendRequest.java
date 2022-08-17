@@ -1,9 +1,11 @@
 package com.nathcat.messagecat_database_entities;
 
+import java.io.Serializable;
+
 /**
  * Represents a friend request from the database.
  */
-public class FriendRequest {
+public class FriendRequest implements Serializable {
     public final int FriendRequestID;
     public final int SenderID;
     public final int RecipientID;

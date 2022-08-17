@@ -1,9 +1,11 @@
 package com.nathcat.messagecat_database_entities;
 
+import java.io.Serializable;
+
 /**
  * Represents a chat from the database.
  */
-public class Chat {
+public class Chat implements Serializable {
     public final int ChatID;
     public final String Name;
     public final String Description;

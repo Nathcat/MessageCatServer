@@ -82,6 +82,7 @@ public class Server {
 
             } catch (QueueIsLockedException e) {
                 while (server.authenticationHandlerQueueManager.queue.locked) {
+                    server.DebugLog("Queue is locked.");
                     try {
                         server.authenticationHandlerQueueManager.queue.Push(new CloneableObject(clientSocket));
 

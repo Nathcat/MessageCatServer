@@ -3,6 +3,7 @@ package com.nathcat.messagecat_server;
 import com.nathcat.RSA.EncryptedObject;
 import com.nathcat.RSA.KeyPair;
 import com.nathcat.RSA.PrivateKeyException;
+import com.nathcat.RSA.PublicKeyException;
 import com.nathcat.messagecat_database_entities.User;
 import org.json.simple.JSONObject;
 
@@ -34,6 +35,7 @@ public class ConnectionHandler extends Handler {
     @Override
     public void run() {
         while (true) {
+            this.busy = false;
             // Stop this handler process
             this.StopHandler();
 
@@ -53,6 +55,14 @@ public class ConnectionHandler extends Handler {
             this.clientKeyPair = (KeyPair) data.get("clientKeyPair");
             User user = (User) data.get("user");
 
+            try {
+                this.Send(this.clientKeyPair.encrypt("ready"));
+            } catch (IOException | PublicKeyException e) {
+                this.DebugLog("Failed to send ready message.");
+                this.Close();
+                continue;
+            }
+
             // Start the connection handler loop
             while (true) {
                 try {
@@ -70,6 +80,7 @@ public class ConnectionHandler extends Handler {
                     } catch (QueueIsFullException | QueueIsLockedException ignored) {}
 
                 } catch (IOException | ClassNotFoundException e) {
+                    e.printStackTrace();
                     this.DebugLog("Receive failed!");
                     this.Close();
                     break;

@@ -37,6 +37,7 @@ public class RequestHandler extends Handler {
     @Override
     public void run() {
         while (true) {
+            this.busy = false;
             // Stop this handler process
             this.StopHandler();
 

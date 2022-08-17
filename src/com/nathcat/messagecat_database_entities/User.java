@@ -1,9 +1,11 @@
 package com.nathcat.messagecat_database_entities;
 
+import java.io.Serializable;
+
 /**
  * Represents a User from the database
  */
-public class User {
+public class User implements Serializable {
     public final int UserID;
     public final String Username;
     public final String Password;

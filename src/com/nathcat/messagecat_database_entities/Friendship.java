@@ -1,9 +1,11 @@
 package com.nathcat.messagecat_database_entities;
 
+import java.io.Serializable;
+
 /**
  * Represents a friendship from the database.
  */
-public class Friendship {
+public class Friendship implements Serializable {
     public final int FriendshipID;
     public final int UserID;
     public final int FriendID;

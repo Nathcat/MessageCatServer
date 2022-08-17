@@ -30,6 +30,7 @@ public class AuthenticationHandler extends Handler {
     @Override
     public void run() {
         while (true) {
+            this.busy = false;
             // Stop the handler process
             this.StopHandler();
 
@@ -40,6 +41,7 @@ public class AuthenticationHandler extends Handler {
 
             // Tell the queue manager that this handler is busy and cannot be assigned to a new task yet
             this.busy = true;
+            this.DebugLog("Assigned to task");
             // Get the socket from the queue object
             this.socket = (Socket) ((CloneableObject) this.queueObject).object;
 
@@ -91,6 +93,32 @@ public class AuthenticationHandler extends Handler {
                 try {
                     // Get authentication data from the client
                     User authenticationData = (User) this.keyPair.decrypt((EncryptedObject) this.Receive());
+                    if (authenticationData.UserID == -2) {
+                        // Add as a new user
+                        while (true) {
+                            try {
+                                JSONObject dataToPass = new JSONObject();
+                                dataToPass.put("socket", this.socket);
+                                dataToPass.put("oos", this.oos);
+                                dataToPass.put("ois", this.ois);
+                                dataToPass.put("keyPair", this.keyPair);
+                                dataToPass.put("clientKeyPair", this.clientKeyPair);
+                                dataToPass.put("user", null);
+
+                                JSONObject request = new JSONObject();
+                                request.put("type", RequestType.AddUser);
+                                request.put("data", authenticationData);
+
+                                dataToPass.put("request", request);
+
+                                this.server.requestHandlerQueueManager.queue.Push(new CloneableObject(dataToPass));
+                                break;
+
+                            } catch (QueueIsLockedException | QueueIsFullException ignored) {}
+                        }
+
+                        continue;
+                    }
                     // Get the user data from the database by username
                     User user = this.server.db.GetUserByUsername(authenticationData.Username);
                     // Check the data
