@@ -1,16 +1,15 @@
 package com.nathcat.messagecat_server;
 
-import com.nathcat.RSA.EncryptedObject;
-import com.nathcat.RSA.KeyPair;
-import com.nathcat.RSA.PrivateKeyException;
-import com.nathcat.RSA.PublicKeyException;
+import com.nathcat.RSA.*;
 import com.nathcat.messagecat_database_entities.User;
+import jdk.jshell.spi.ExecutionControl;
 import org.json.simple.JSONObject;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.net.SocketException;
 import java.security.NoSuchAlgorithmException;
 
 /**
@@ -36,63 +35,99 @@ public class ConnectionHandler extends Handler {
     public void run() {
         while (true) {
             this.busy = false;
-            // Stop this handler process
             this.StopHandler();
 
-            // Check that the queue object is not null
             if (this.queueObject == null) {
                 continue;
             }
 
             this.busy = true;
+            this.authenticated = false;
+            this.DebugLog("Assigned to task");
 
-            // Get the data from the authentication handler
-            JSONObject data = (JSONObject) ((CloneableObject) this.queueObject).object;
-            this.socket = (Socket) data.get("socket");
-            this.oos = (ObjectOutputStream) data.get("oos");
-            this.ois = (ObjectInputStream) data.get("ois");
-            this.keyPair = (KeyPair) data.get("keyPair");
-            this.clientKeyPair = (KeyPair) data.get("clientKeyPair");
-            User user = (User) data.get("user");
+            this.socket = (Socket) ((CloneableObject) this.queueObject).object;
 
             try {
-                this.Send(this.clientKeyPair.encrypt("ready"));
-            } catch (IOException | PublicKeyException e) {
-                this.DebugLog("Failed to send ready message.");
+                this.InitializeIO();
+
+            } catch (IOException e) {
+                this.DebugLog("Failed to initialise I/O (" + e.getMessage() + ").");
                 this.Close();
                 continue;
             }
 
-            // Start the connection handler loop
-            while (true) {
-                try {
-                    // Wait for a request
-                    JSONObject request = (JSONObject) this.keyPair.decrypt((EncryptedObject) this.Receive());
-
-                    // Pass the request to the request handler queue
-                    JSONObject dataToPass = new JSONObject();
-                    dataToPass.putAll(data);
-                    dataToPass.put("request", request);
-
-                    try {
-                        this.server.requestHandlerQueueManager.queue.Push(new CloneableObject(dataToPass));
-
-                    } catch (QueueIsFullException | QueueIsLockedException ignored) {}
-
-                } catch (IOException | ClassNotFoundException e) {
-                    e.printStackTrace();
-                    this.DebugLog("Receive failed!");
-                    this.Close();
-                    break;
-
-                } catch (PrivateKeyException e) {
-                    this.DebugLog("Failed to decrypt!");
-                    this.Close();
-                    break;
-                }
+            // Perform handshake
+            if (this.DoHandshake()) {
+                // Start connection main loop
+                this.MainLoop();
             }
-
-            this.busy = false;
+            else {
+                this.DebugLog("Handshake failed!");
+                this.Close();
+            }
         }
+    }
+
+    /**
+     * Perform the handshake between the server and the client
+     * @return Whether the handshake was successful or not
+     */
+    private boolean DoHandshake() {
+        // Try to generate an RSA key pair
+        try {
+            this.keyPair = RSA.GenerateRSAKeyPair();
+        } catch (NoSuchAlgorithmException e) {
+            this.DebugLog("Failed to generate RSA key pair! (" + e.getMessage() + ")");
+            this.queueObject = null;
+            return false;
+        }
+
+        // Perform the handshake process
+        boolean handshakeSuccessful = true;
+
+        // Try to send the server's public key to the client
+        try {
+            this.Send(new KeyPair(this.keyPair.pub, null));
+
+        } catch (IOException e) {
+            this.DebugLog(e.getMessage());
+            handshakeSuccessful = false;
+        }
+
+        // Try to receive the client's key pair
+        try {
+            this.clientKeyPair = (KeyPair) this.Receive();
+
+        } catch (IOException | ClassNotFoundException e) {
+            this.DebugLog(e.getMessage());
+            handshakeSuccessful = false;
+        }
+
+        return handshakeSuccessful;
+    }
+
+    /**
+     * The main handler loop for the connection
+     */
+    private void MainLoop() {
+        while (true) {
+            try {
+                JSONObject request = (JSONObject) this.keyPair.decrypt((EncryptedObject) this.Receive());
+                this.Send(this.clientKeyPair.encrypt(this.HandleRequest(request)));
+
+            } catch (PrivateKeyException | PublicKeyException | IOException | ClassNotFoundException e) {
+                this.DebugLog("Exception in non-authenticated protocol: " + e.getMessage());
+            }
+        }
+    }
+
+    /**
+     * Handle a JSON request object
+     * @param request The JSON request object
+     * @return The response object
+     */
+    private Object HandleRequest(JSONObject request) {
+        // TODO Handle request, the general process for this can be found in the original RequestHandler, although it will need some tweaking
+        return null;
     }
 }

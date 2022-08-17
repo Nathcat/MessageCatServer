@@ -16,8 +16,8 @@ import com.nathcat.RSA.*;
  */
 public class Handler extends Thread {
     public Socket socket;                  // The TCP/IP connection socket
-    public ObjectOutputStream oos;        // Stream to output objects to through the socket
-    public ObjectInputStream ois;         // Stream to receive objects from the socket
+    public ObjectOutputStream oos;         // Stream to output objects to through the socket
+    public ObjectInputStream ois;          // Stream to receive objects from the socket
     private final int threadNum;           // The thread number, used in debug messages
     private final String className;        // The name of the class to be used in debug messages
     public KeyPair keyPair;                // The encryption key pair to be used in communications
@@ -25,6 +25,7 @@ public class Handler extends Thread {
     public boolean busy = false;           // Indicates whether the handler is busy
     public Server server;                  // Parent server object
     public Object queueObject;             // The object supplied to the handler from the QueueManager
+    public boolean authenticated;          // Whether the connection is authenticated or not
 
     /**
      * Constructor method, assigns private and constant fields
