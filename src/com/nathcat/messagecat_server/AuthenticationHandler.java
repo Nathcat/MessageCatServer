@@ -11,6 +11,7 @@ import org.json.simple.JSONObject;
  * Handles the client authentication and handshake process
  *
  * @author Nathan "Nathan" Baines
+ * @deprecated No longer used in the single handler thread design
  */
 public class AuthenticationHandler extends Handler {
     /**

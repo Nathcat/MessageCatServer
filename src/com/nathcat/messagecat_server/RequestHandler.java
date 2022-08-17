@@ -16,6 +16,7 @@ import java.security.NoSuchAlgorithmException;
  * Handles any requests received by the connection handler
  *
  * @author Nathan "Nathcat" Baines
+ * @deprecated No longer used in the single handler thread design
  */
 public class RequestHandler extends Handler {
     private User user;
