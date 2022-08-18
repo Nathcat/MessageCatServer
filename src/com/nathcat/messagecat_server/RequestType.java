@@ -6,6 +6,7 @@ package com.nathcat.messagecat_server;
  * @author Nathan "Nathcat" Baines
  */
 public enum RequestType {
+    Authenticate,
     GetUser,
     GetFriendship,
     GetFriendRequests,

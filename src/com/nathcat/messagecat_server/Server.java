@@ -22,12 +22,12 @@ public class Server {
     private final int port;
     private final int maxThreadCount;
     private final int maxQueueCapacity;
-    public final Handler[] authenticationHandlerPool;
+    //public final Handler[] authenticationHandlerPool;
     public final Handler[] connectionHandlerPool;
-    public final Handler[] requestHandlerPool;
-    public final QueueManager authenticationHandlerQueueManager;
+    //public final Handler[] requestHandlerPool;
+    //public final QueueManager authenticationHandlerQueueManager;
     public final QueueManager connectionHandlerQueueManager;
-    public final QueueManager requestHandlerQueueManager;
+    //public final QueueManager requestHandlerQueueManager;
     public final Database db;
 
     /**
@@ -64,7 +64,7 @@ public class Server {
                 server.DebugLog("Received connection: " + clientSocket.getInetAddress().toString());
 
                 // Push the connection to the queue
-                server.authenticationHandlerQueueManager.queue.Push(new CloneableObject(clientSocket));
+                server.connectionHandlerQueueManager.queue.Push(new CloneableObject(clientSocket));
 
             } catch (IOException e) {
                 server.DebugLog("An error occurred when accepting a connection: " + e.getMessage());
@@ -81,26 +81,27 @@ public class Server {
                 }
 
             } catch (QueueIsLockedException e) {
-                while (server.authenticationHandlerQueueManager.queue.locked) {
+                while (server.connectionHandlerQueueManager.queue.locked) {
                     server.DebugLog("Queue is locked.");
+                }
+                server.DebugLog("Queue is no longer locked.");
+                try {
+                    server.connectionHandlerQueueManager.queue.Push(new CloneableObject(clientSocket));
+
+                } catch (QueueIsLockedException ignored) {
+                    server.DebugLog("Queue is locked");
+
+                } catch (QueueIsFullException ex) {
+                    server.DebugLog("AuthenticationHandler queue is full!");
+                    assert clientSocket != null;
                     try {
-                        server.authenticationHandlerQueueManager.queue.Push(new CloneableObject(clientSocket));
+                        clientSocket.close();
 
-                    } catch (QueueIsLockedException ignored) {
-                        //server.DebugLog("Queue is locked");
-
-                    } catch (QueueIsFullException ex) {
-                        server.DebugLog("AuthenticationHandler queue is full!");
-                        assert clientSocket != null;
-                        try {
-                            clientSocket.close();
-
-                        } catch (IOException exc) {
-                            server.DebugLog("There was an error when closing a client socket! (" + exc.getMessage() + ")");
-                        }
-
-                        break;
+                    } catch (IOException exc) {
+                        server.DebugLog("There was an error when closing a client socket! (" + exc.getMessage() + ")");
                     }
+
+                    break;
                 }
             }
         }
@@ -126,25 +127,25 @@ public class Server {
         this.DebugLog("Creating thread pools");
 
         // Create the thread pools
-        authenticationHandlerPool = new Handler[this.maxThreadCount];
+        //authenticationHandlerPool = new Handler[this.maxThreadCount];
         connectionHandlerPool = new Handler[this.maxThreadCount];
-        requestHandlerPool = new Handler[this.maxThreadCount];
+        //requestHandlerPool = new Handler[this.maxThreadCount];
 
         this.DebugLog("Creating handlers (" + this.maxThreadCount + " handlers to create)");
         // Populate the thread pools with handlers
         for (int i = 0; i < this.maxThreadCount; i++) {
             try {
-                authenticationHandlerPool[i] = new AuthenticationHandler(null, i);
+                //authenticationHandlerPool[i] = new AuthenticationHandler(null, i);
                 connectionHandlerPool[i] = new ConnectionHandler(null, i);
-                requestHandlerPool[i] = new RequestHandler(null, i);
+                //requestHandlerPool[i] = new RequestHandler(null, i);
 
-                authenticationHandlerPool[i].server = this;
+                //authenticationHandlerPool[i].server = this;
                 connectionHandlerPool[i].server = this;
-                requestHandlerPool[i].server = this;
+                //requestHandlerPool[i].server = this;
 
-                authenticationHandlerPool[i].start();
+                //authenticationHandlerPool[i].start();
                 connectionHandlerPool[i].start();
-                requestHandlerPool[i].start();
+                //requestHandlerPool[i].start();
 
             } catch (NoSuchAlgorithmException | IOException e) {
                 this.DebugLog("Failed to create handler pools! (" + e.getMessage() + ")");
@@ -154,13 +155,13 @@ public class Server {
 
         this.DebugLog("Starting queue managers");
         // Start the queue managers
-        authenticationHandlerQueueManager = new QueueManager(this, new Queue(this.maxQueueCapacity), this.authenticationHandlerPool);
+        //authenticationHandlerQueueManager = new QueueManager(this, new Queue(this.maxQueueCapacity), this.authenticationHandlerPool);
         connectionHandlerQueueManager = new QueueManager(this, new Queue(this.maxQueueCapacity), this.connectionHandlerPool);
-        requestHandlerQueueManager = new QueueManager(this, new Queue(this.maxQueueCapacity), this.requestHandlerPool);
+        //requestHandlerQueueManager = new QueueManager(this, new Queue(this.maxQueueCapacity), this.requestHandlerPool);
 
-        authenticationHandlerQueueManager.start();
+        //authenticationHandlerQueueManager.start();
         connectionHandlerQueueManager.start();
-        requestHandlerQueueManager.start();
+        //requestHandlerQueueManager.start();
 
         this.DebugLog("Initial setup complete");
     }
@@ -218,21 +219,21 @@ class ShutdownProcess extends Thread {
     @Override
     public void run() {
         try {
-            this.s.DebugLog(this.s.authenticationHandlerQueueManager.queue.toString());
+            //this.s.DebugLog(this.s.authenticationHandlerQueueManager.queue.toString());
             this.s.DebugLog(this.s.connectionHandlerQueueManager.queue.toString());
-            this.s.DebugLog(this.s.requestHandlerQueueManager.queue.toString());
+            //this.s.DebugLog(this.s.requestHandlerQueueManager.queue.toString());
 
-            for (Handler h : this.s.authenticationHandlerPool) {
-                System.out.print(h.busy + " ");
-            }
-            System.out.println();
+            //for (Handler h : this.s.authenticationHandlerPool) {
+            //    System.out.print(h.busy + " ");
+            //}
+            //System.out.println();
             for (Handler h : this.s.connectionHandlerPool) {
                 System.out.print(h.busy + " ");
             }
             System.out.println();
-            for (Handler h : this.s.requestHandlerPool) {
-                System.out.print(h.busy + " ");
-            }
+            //for (Handler h : this.s.requestHandlerPool) {
+            //    System.out.print(h.busy + " ");
+            //}
 
             this.ss.close();
 

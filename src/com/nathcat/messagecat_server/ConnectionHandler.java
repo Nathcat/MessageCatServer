@@ -1,7 +1,8 @@
 package com.nathcat.messagecat_server;
 
 import com.nathcat.RSA.*;
-import com.nathcat.messagecat_database_entities.User;
+import com.nathcat.messagecat_database.Result;
+import com.nathcat.messagecat_database_entities.*;
 import jdk.jshell.spi.ExecutionControl;
 import org.json.simple.JSONObject;
 
@@ -18,6 +19,8 @@ import java.security.NoSuchAlgorithmException;
  * @author Nathan "Nathcat" Baines
  */
 public class ConnectionHandler extends Handler {
+    private JSONObject request;
+
     /**
      * Constructor method, assigns private and constant fields
      *
@@ -116,7 +119,9 @@ public class ConnectionHandler extends Handler {
                 this.Send(this.clientKeyPair.encrypt(this.HandleRequest(request)));
 
             } catch (PrivateKeyException | PublicKeyException | IOException | ClassNotFoundException e) {
-                this.DebugLog("Exception in non-authenticated protocol: " + e.getMessage());
+                this.DebugLog("Exception in main protocol: " + e.getMessage());
+                this.Close();
+                return;
             }
         }
     }
@@ -127,7 +132,415 @@ public class ConnectionHandler extends Handler {
      * @return The response object
      */
     private Object HandleRequest(JSONObject request) {
-        // TODO Handle request, the general process for this can be found in the original RequestHandler, although it will need some tweaking
+        this.request = request;
+
+        switch ((RequestType) request.get("type")) {
+            case Authenticate -> {
+                return this.Authenticate();
+            }
+
+            case GetUser -> {
+                return this.GetUser();
+            }
+
+            case GetFriendship -> {
+                return this.GetFriendship();
+            }
+
+            case GetFriendRequests -> {
+                return this.GetFriendRequests();
+            }
+
+            case GetChat -> {
+                return this.GetChat();
+            }
+
+            case GetChatInvite -> {
+                return this.GetChatInvite();
+            }
+
+            case GetPublicKey -> {
+                return this.GetPublicKey();
+            }
+
+            case AddUser -> {
+                return this.AddUser();
+            }
+
+            case AddChat -> {
+                return this.AddChat();
+            }
+
+            case AcceptFriendRequest -> {
+                return this.AcceptFriendRequest();
+            }
+
+            case DeclineFriendRequest -> {
+                return this.DeclineFriendRequest();
+            }
+
+            case AcceptChatInvite -> {
+                return this.AcceptChatInvite();
+            }
+
+            case DeclineChatInvite -> {
+                return this.DeclineChatInvite();
+            }
+
+            case SendMessage -> {
+                return this.SendMessage();
+            }
+
+            case SendFriendRequest -> {
+                return this.SendFriendRequest();
+            }
+
+            case SendChatInvite -> {
+                return this.SendChatInvite();
+            }
+        }
+
         return null;
+    }
+
+    private Object Authenticate() {
+        // Get the authentication data from the request
+        User authData = (User) this.request.get("data");
+
+        // Get the corresponding user from the database (by username)
+        User user = this.server.db.GetUserByUsername(authData.Username);
+
+        // Check if the user is null (i.e. the username is incorrect)
+        if (user == null) {
+            this.authenticated = false;
+            return "failed";
+        }
+        else {  // Check the auth data is valid
+            if (user.Password.contentEquals(authData.Password)) {
+                this.authenticated = true;
+                return user;
+            }
+            else {
+                this.authenticated = false;
+                return "failed";
+            }
+        }
+    }
+
+    private Object GetUser() {
+        if (!this.authenticated) {
+            return null;
+        }
+
+        // Get the user from the request and decrypt
+        User requestedUser = (User) this.request.get("data");
+
+        // Get the selector
+        String selector = (String) this.request.get("selector");
+
+        // Search the database and return the result
+        Object result = null;
+
+        if (selector.contentEquals("id")) {
+            result = this.server.db.GetUserByID(requestedUser.UserID);
+        }
+        else if (selector.contentEquals("username")) {
+            result = this.server.db.GetUserByUsername(requestedUser.Username);
+        }
+        else if (selector.contentEquals("displayName")) {
+            result = this.server.db.GetUserByDisplayName(requestedUser.DisplayName);
+        }
+
+        if (result == null) {
+            this.DebugLog("Invalid selector!");
+            this.Close();
+            return null;
+        }
+
+        // Remove the password from the result
+        result = new User(((User) result).UserID, ((User) result).Username, null, ((User) result).DisplayName, ((User) result).DateCreated, ((User) result).ProfilePicturePath);
+
+        return result;
+    }
+
+    private Object GetFriendship() {
+        if (!this.authenticated) {
+            return null;
+        }
+
+        // Get the friendship from the request and decrypt
+        Friendship requestedFriendship = (Friendship) this.request.get("data");
+
+        // Get the selector
+        String selector = (String) this.request.get("selector");
+
+        // Search the database and return the result
+        Object result = null;
+        if (selector.contentEquals("id")) {
+            result = this.server.db.GetFriendshipByID(requestedFriendship.FriendshipID);
+        }
+        else if (selector.contentEquals("userID")) {
+            result = this.server.db.GetFriendshipByUserID(requestedFriendship.FriendshipID);
+        }
+        else if (selector.contentEquals("userID&FriendID")) {
+            result = this.server.db.GetFriendshipByUserIDAndFriendID(requestedFriendship.UserID, requestedFriendship.FriendshipID);
+        }
+
+        if (result == null) {
+            this.DebugLog("Invalid selector!");
+            this.Close();
+            return null;
+        }
+
+        return result;
+    }
+
+    private Object GetFriendRequests() {
+        if (!this.authenticated) {
+            return null;
+        }
+
+        // Get the friend request from the request and decrypt it
+        FriendRequest requestedFriendRequest = (FriendRequest) this.request.get("data");
+
+        // Get the selector
+        String selector = (String) this.request.get("selector");
+
+        // Search the database and return the result
+        Object result = null;
+
+        if (selector.contentEquals("senderID")) {
+            result = this.server.db.GetFriendRequestsBySenderID(requestedFriendRequest.SenderID);
+        }
+        else if (selector.contentEquals("recipientID")) {
+            result = this.server.db.GetFriendRequestsByRecipientID(requestedFriendRequest.RecipientID);
+        }
+
+        if (result == null) {
+            this.DebugLog("Invalid selector!");
+            this.Close();
+            return null;
+        }
+
+        return result;
+    }
+
+    private Object GetChat() {
+        if (!this.authenticated) {
+            return null;
+        }
+
+        // Get the chat from the request and decrypt
+        Chat requestedChat = (Chat) this.request.get("data");
+
+        // Search the database and return the result
+        Object result = this.server.db.GetChatByID(requestedChat.ChatID);
+
+        if (result == null) {
+            this.DebugLog("Invalid selector!");
+            this.Close();
+            return null;
+        }
+
+        return result;
+    }
+
+    private Object GetChatInvite() {
+        if (!this.authenticated) {
+            return null;
+        }
+
+        // Get the chat invite from the request and decrypt it
+        ChatInvite requestedChatInvite = (ChatInvite) this.request.get("data");
+
+        // Get the selector
+        String selector = (String) this.request.get("selector");
+
+        // Search the database and return the result
+        Object result = null;
+
+        if (selector.contentEquals("id")) {
+            result = this.server.db.GetChatInviteByID(requestedChatInvite.ChatInviteID);
+        }
+        else if (selector.contentEquals("senderID")) {
+            result = this.server.db.GetChatInvitesBySenderID(requestedChatInvite.SenderID);
+        }
+        else if (selector.contentEquals("recipientID")) {
+            result = this.server.db.GetChatInvitesByRecipientID(requestedChatInvite.RecipientID);
+        }
+
+        if (result == null) {
+            this.DebugLog("Invalid selector!");
+            this.Close();
+            return null;
+        }
+
+        return result;
+    }
+
+    private Object GetPublicKey() {
+        if (!this.authenticated) {
+            return null;
+        }
+
+        // Get the public key id from the request
+        int keyID = (int) this.request.get("data");
+
+        // Get the key pair from the database
+        return this.server.db.GetKeyPair(keyID);
+    }
+
+    private Object AddUser() {
+        // Get the user from the request and decrypt
+        User newUser = (User) this.request.get("data");
+
+        // Add the new user through the database
+        this.server.db.AddUser(newUser);
+
+        // Get the new user from the database and send back to the client
+        return this.server.db.GetUserByUsername(newUser.Username);
+    }
+
+    private Object AddChat() {
+        if (!this.authenticated) {
+            return null;
+        }
+
+        // Get the public key from the request
+        KeyPair chatKeyPair = (KeyPair) this.request.get("keyPair");
+
+        // Get the chat from the request and decrypt
+        Chat newChat = (Chat) this.request.get("data");
+
+        // Add the chat and public key to the database
+        this.server.db.AddChat(newChat);
+        this.server.db.AddKeyPair(chatKeyPair);
+
+        // Send the new chat back to the client
+        return this.server.db.GetChatByPublicKeyID(chatKeyPair.hashCode());
+    }
+
+    private Object AcceptFriendRequest() {
+        if (!this.authenticated) {
+            return null;
+        }
+
+        // Get the friend request from the request, since the data contained are all integers we do not need to decrypt
+        FriendRequest fr = (FriendRequest) this.request.get("data");
+
+        // Create the friend objects
+        Friendship friendA = new Friendship(-1, fr.SenderID, fr.RecipientID, "");
+        Friendship friendB = new Friendship(-1, fr.RecipientID, fr.SenderID, "");
+
+        // Add the friendships to the database
+        this.server.db.AddFriendship(friendA);
+        this.server.db.AddFriendship(friendB);
+
+        // Delete the friend requests from the database
+        if (this.server.db.DeleteFriendRequest(fr.FriendRequestID) == Result.FAILED) {
+            return "failed";
+        }
+
+        // Reply to the client
+        return "done";
+    }
+
+    private Object DeclineFriendRequest() {
+        if (!this.authenticated) {
+            return null;
+        }
+
+        // Get the friend request from the request, since the data contained are all integers we do not need to decrypt
+        FriendRequest fr = (FriendRequest) this.request.get("data");
+
+        // Delete the friend requests from the database
+        if (this.server.db.DeleteFriendRequest(fr.FriendRequestID) == Result.FAILED) {
+            return "failed";
+        }
+
+        // Reply to the client
+        return "done";
+    }
+
+    private Object AcceptChatInvite() {
+        if (!this.authenticated) {
+            return null;
+        }
+
+        // Get the chat invite from the request and the private key from the database
+        ChatInvite ci = (ChatInvite) this.request.get("data");
+        KeyPair privateKey = this.server.db.GetKeyPair(ci.PrivateKeyID);
+
+        // Delete the chat invite from the database
+        if (this.server.db.DeleteChatInvite(ci.ChatInviteID) == Result.FAILED || this.server.db.RemoveKeyPair(ci.PrivateKeyID) == Result.FAILED) {
+            return "failed";
+        }
+
+        return "done";
+    }
+
+    private Object DeclineChatInvite() {
+        if (!this.authenticated) {
+            return null;
+        }
+
+        // Get the chat invite from the request and the private key from the database
+        ChatInvite ci = (ChatInvite) this.request.get("data");
+
+        // Delete the chat invite from the database
+        if (this.server.db.DeleteChatInvite(ci.ChatInviteID) == Result.FAILED || this.server.db.RemoveKeyPair(ci.PrivateKeyID) == Result.FAILED) {
+            return "failed";
+        }
+
+        return "done";
+    }
+
+    private Object SendMessage() {
+        if (!this.authenticated) {
+            return null;
+        }
+
+        // Get the message from the database
+        Message message = (Message) this.request.get("data");
+
+        // Add the message to the database
+        this.server.db.GetMessageQueue(message.ChatID).Push(message);
+
+        // Reply to the client
+        return "done";
+    }
+
+    private Object SendFriendRequest() {
+        if (!this.authenticated) {
+            return null;
+        }
+
+        // Get the friend request from the request
+        FriendRequest fr = (FriendRequest) this.request.get("data");
+
+        // Add the request to the database
+        if (this.server.db.AddFriendRequest(fr) == Result.FAILED) {
+            return "failed";
+        }
+
+        return "done";
+    }
+
+    private Object SendChatInvite() {
+        if (!this.authenticated) {
+            return null;
+        }
+
+        // Get the chat invite and public key from the request
+        ChatInvite chatInvite = (ChatInvite) this.request.get("data");
+        KeyPair privateKey = (KeyPair) this.request.get("keyPair");
+
+        // Add the chat invite and private key to the database
+        if (this.server.db.AddKeyPair(privateKey) == Result.FAILED || this.server.db.AddChatInvite(chatInvite) == Result.FAILED) {
+            return "failed";
+        }
+
+        // Reply to the client
+        return "done";
     }
 }
