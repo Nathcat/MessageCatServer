@@ -13,6 +13,7 @@ public enum RequestType {
     GetChat,
     GetChatInvite,
     GetPublicKey,
+    GetMessageQueue,
     AddUser,
     AddChat,
     AcceptFriendRequest,

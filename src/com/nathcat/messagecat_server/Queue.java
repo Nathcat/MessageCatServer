@@ -3,76 +3,89 @@ package com.nathcat.messagecat_server;
 import java.util.Arrays;
 
 /**
- * Queue data structure
+ * Queue data structure implemented using an internal linked list
  *
  * @author Nathan "Nathcat" Baines
  */
 public class Queue implements Cloneable {
-    private final int maxCapacity;  // The maximum capacity of the queue
-    private Object[] data;          // The data array
-    public boolean locked = false;  // Determines whether new objects can be pushed to the queue
+    private Node startNode = null;  // The start node of the linked list
 
     /**
-     * Constructor method
-     * @param maxCapacity The maximum capacity of the queue
+     * Represents a node of the linked list
      */
-    public Queue(int maxCapacity) {
-        this.maxCapacity = maxCapacity;
-        data = new Object[this.maxCapacity];
-    }
+    private static class Node implements Cloneable {
+        public final Object data;  // The data contained by the node
+        public Node nextNode;      // The next node in the linked list
 
-    public String toString() {
-        return Arrays.toString(this.data);
+        public Node(Object data, Node nextNode) {
+            this.data = data;
+            this.nextNode = nextNode;
+        }
+
+        /**
+         * Create an identical copy of this object
+         * @return The clone of this object
+         */
+        @Override
+        public Object clone() {
+            try {
+                return super.clone();
+
+            } catch (CloneNotSupportedException e) {
+                e.printStackTrace();
+            }
+
+            return null;
+        }
     }
 
     /**
-     * Pop an object off the front of the queue
-     * @return The item that was just removed from the queue
+     * Push a new object to the end of the queue
+     * @param data The object to push
+     */
+    public void Push(Object data) {
+        if (this.startNode == null) {
+            this.startNode = new Node(data, null);
+            return;
+        }
+
+        Node currentNode = this.startNode;
+        while (currentNode.nextNode != null) {
+            currentNode = currentNode.nextNode;
+        }
+
+        currentNode.nextNode = new Node(data, null);
+    }
+
+    /**
+     * Remove the object from the front of the queue
+     * @return The object that was at the front of the queue
      */
     public Object Pop() {
-        Object lastItem = this.data[this.maxCapacity - 1];
+        if (this.startNode == null) {
+            return null;
+        }
 
-        // The item at the front of the queue will be at the end of the array
-        // Create a copy of the data array
-        Object[] oldData = new Object[this.maxCapacity];
-        System.arraycopy(this.data, 0, oldData, 0, this.maxCapacity);
-
-        this.data = new Object[this.maxCapacity];
-
-        // Copy the copy back into the data array, but with an offset of one index
-        // This will remove the item at the end of the array, i.e. the front of the queue
-        System.arraycopy(oldData, 0, this.data, 1, this.maxCapacity - 1);
-
-        return lastItem;
+        Object data = this.startNode.data;
+        this.startNode = this.startNode.nextNode;
+        return data;
     }
 
-    /**
-     * Push an object to the end of the queue
-     * @param obj The item to add
-     */
-    public void Push(Object obj) throws QueueIsFullException, QueueIsLockedException {
-        if (this.locked) {
-            throw new QueueIsLockedException();
+    @Override
+    public String toString() {
+        if (this.startNode == null) {
+            return "";
         }
 
-        // First determine the index of the end of the queue, i.e. the index of the first non-null item in the data array
-        int indexOfEnd = -1;
-        for (int i = 0; i < this.maxCapacity; i++) {
-            if (this.data[i] != null) {
-                indexOfEnd = i;
-                break;
-            }
+        StringBuilder sb = new StringBuilder();
+        Node currentNode = this.startNode;
+        sb.append(this.startNode.data);
+        while (currentNode.nextNode != null) {
+            currentNode = currentNode.nextNode;
+            sb.append(currentNode.data).append(" ");
         }
 
-        if (indexOfEnd == -1) {  // The queue is empty in this case
-            indexOfEnd = this.maxCapacity;
-        }
-        else if (indexOfEnd == 0) {  // The queue is full in this case
-            throw new QueueIsFullException();
-        }
-
-        // Set the last null item to the new object
-        this.data[indexOfEnd - 1] = obj;
+        return sb.toString();
     }
 
     /**

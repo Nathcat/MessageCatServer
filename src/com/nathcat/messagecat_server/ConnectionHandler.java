@@ -12,6 +12,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 
 /**
  * Maintains a connection with the client device
@@ -115,8 +116,19 @@ public class ConnectionHandler extends Handler {
     private void MainLoop() {
         while (true) {
             try {
-                JSONObject request = (JSONObject) this.keyPair.decrypt((EncryptedObject) this.Receive());
-                this.Send(this.clientKeyPair.encrypt(this.HandleRequest(request)));
+                JSONObject request = (JSONObject) this.keyPair.decryptBigObject((EncryptedObject[]) this.Receive());
+                Object response = this.HandleRequest(request);
+                this.Send(this.clientKeyPair.encryptBigObject(response));
+                /*
+                if (response == null) {
+                    this.Send(this.clientKeyPair.encrypt(response));
+                }
+                else if (response.getClass() == KeyPair.class) {
+                    this.Send(this.clientKeyPair.encryptBigObject(response));
+                }
+                else {
+                    this.Send(this.clientKeyPair.encrypt(response));
+                }*/
 
             } catch (PrivateKeyException | PublicKeyException | IOException | ClassNotFoundException e) {
                 this.DebugLog("Exception in main protocol: " + e.getMessage());
@@ -161,6 +173,10 @@ public class ConnectionHandler extends Handler {
 
             case GetPublicKey -> {
                 return this.GetPublicKey();
+            }
+
+            case GetMessageQueue -> {
+                return this.GetMessageQueue();
             }
 
             case AddUser -> {
@@ -250,15 +266,24 @@ public class ConnectionHandler extends Handler {
         else if (selector.contentEquals("displayName")) {
             result = this.server.db.GetUserByDisplayName(requestedUser.DisplayName);
         }
-
-        if (result == null) {
+        else {
             this.DebugLog("Invalid selector!");
             this.Close();
             return null;
         }
 
-        // Remove the password from the result
-        result = new User(((User) result).UserID, ((User) result).Username, null, ((User) result).DisplayName, ((User) result).DateCreated, ((User) result).ProfilePicturePath);
+        // Remove the password from the result/s
+        if (result.getClass() == User.class) {
+            result = new User(((User) result).UserID, ((User) result).Username, null, ((User) result).DisplayName, ((User) result).DateCreated, ((User) result).ProfilePicturePath);
+        }
+        else {
+            User[] uArray = (User[]) result;
+            for (int i = 0; i < uArray.length; i++) {
+                uArray[i] = new User(uArray[i].UserID, uArray[i].Username, null, uArray[i].DisplayName, uArray[i].DateCreated, uArray[i].ProfilePicturePath);
+            }
+
+            result = uArray;
+        }
 
         return result;
     }
@@ -280,13 +305,12 @@ public class ConnectionHandler extends Handler {
             result = this.server.db.GetFriendshipByID(requestedFriendship.FriendshipID);
         }
         else if (selector.contentEquals("userID")) {
-            result = this.server.db.GetFriendshipByUserID(requestedFriendship.FriendshipID);
+            result = this.server.db.GetFriendshipByUserID(requestedFriendship.UserID);
         }
         else if (selector.contentEquals("userID&FriendID")) {
-            result = this.server.db.GetFriendshipByUserIDAndFriendID(requestedFriendship.UserID, requestedFriendship.FriendshipID);
+            result = this.server.db.GetFriendshipByUserIDAndFriendID(requestedFriendship.UserID, requestedFriendship.FriendID);
         }
-
-        if (result == null) {
+        else {
             this.DebugLog("Invalid selector!");
             this.Close();
             return null;
@@ -315,8 +339,7 @@ public class ConnectionHandler extends Handler {
         else if (selector.contentEquals("recipientID")) {
             result = this.server.db.GetFriendRequestsByRecipientID(requestedFriendRequest.RecipientID);
         }
-
-        if (result == null) {
+        else {
             this.DebugLog("Invalid selector!");
             this.Close();
             return null;
@@ -334,15 +357,7 @@ public class ConnectionHandler extends Handler {
         Chat requestedChat = (Chat) this.request.get("data");
 
         // Search the database and return the result
-        Object result = this.server.db.GetChatByID(requestedChat.ChatID);
-
-        if (result == null) {
-            this.DebugLog("Invalid selector!");
-            this.Close();
-            return null;
-        }
-
-        return result;
+        return this.server.db.GetChatByID(requestedChat.ChatID);
     }
 
     private Object GetChatInvite() {
@@ -368,8 +383,7 @@ public class ConnectionHandler extends Handler {
         else if (selector.contentEquals("recipientID")) {
             result = this.server.db.GetChatInvitesByRecipientID(requestedChatInvite.RecipientID);
         }
-
-        if (result == null) {
+        else {
             this.DebugLog("Invalid selector!");
             this.Close();
             return null;
@@ -390,6 +404,18 @@ public class ConnectionHandler extends Handler {
         return this.server.db.GetKeyPair(keyID);
     }
 
+    private Object GetMessageQueue() {
+        if (!this.authenticated) {
+            return null;
+        }
+
+        // Get the chat id from the request
+        int chatID = (int) this.request.get("data");
+
+        // Get the message queue
+        return this.server.db.GetMessageQueue(chatID);
+    }
+
     private Object AddUser() {
         // Get the user from the request and decrypt
         User newUser = (User) this.request.get("data");
@@ -406,11 +432,14 @@ public class ConnectionHandler extends Handler {
             return null;
         }
 
-        // Get the public key from the request
+        // Create a new public key
         KeyPair chatKeyPair = (KeyPair) this.request.get("keyPair");
+        this.DebugLog(chatKeyPair.toString());
+        this.DebugLog(String.valueOf(chatKeyPair.hashCode()));
 
         // Get the chat from the request and decrypt
         Chat newChat = (Chat) this.request.get("data");
+        newChat = new Chat(newChat.ChatID, newChat.Name, newChat.Description, chatKeyPair.hashCode());
 
         // Add the chat and public key to the database
         this.server.db.AddChat(newChat);
@@ -476,7 +505,7 @@ public class ConnectionHandler extends Handler {
             return "failed";
         }
 
-        return "done";
+        return privateKey;
     }
 
     private Object DeclineChatInvite() {

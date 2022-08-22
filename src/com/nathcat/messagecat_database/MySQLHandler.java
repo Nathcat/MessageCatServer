@@ -55,7 +55,7 @@ public class MySQLHandler {
      * @return The ResultSet returned from the query
      * @throws SQLException Thrown by SQL errors.
      */
-    private ResultSet Select(String query) throws SQLException {
+    protected ResultSet Select(String query) throws SQLException {
         // Create and execute the statement
         Statement stmt = conn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
         stmt.execute(query);
@@ -71,7 +71,7 @@ public class MySQLHandler {
      * @param query The query to be executed
      * @throws SQLException Thrown by SQL errors
      */
-    private void Update(String query) throws SQLException {
+    protected void Update(String query) throws SQLException {
         // Create and execute the statement
         Statement stmt = conn.createStatement();
         stmt.execute(query);
