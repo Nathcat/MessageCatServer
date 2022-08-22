@@ -31,16 +31,18 @@ public class QueueManager extends Thread{
     @Override
     public void run() {
         while (true) {
-            // Create a copy of the queue
-            Queue queueCopy = (Queue) this.queue.clone();
-            this.queue.locked = true;
-
             // Get the object at the front of the queue
-            Object frontObj = queueCopy.Pop();
+            Object frontObj = this.queue.Pop();
 
             // Check if the front object is null or not
             if (frontObj == null) {
-                this.queue.locked = false;
+                try {
+                    Thread.sleep(1000);
+
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
                 continue;
             }
 
@@ -62,19 +64,11 @@ public class QueueManager extends Thread{
 
             // If no handler is available, push the object back into the queue
             if (!threadAvailable) {
-                try {
-                    queueCopy.Push(frontObj);
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                this.queue.Push(frontObj);
             }
 
-            this.queue = queueCopy;
-            this.queue.locked = false;
-
             try {
-                Thread.sleep(100);
+                Thread.sleep(1000);
 
             } catch (InterruptedException e) {
                 e.printStackTrace();

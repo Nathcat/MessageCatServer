@@ -13,9 +13,10 @@ import java.sql.SQLException;
  * @author Nathan "Nathcat" Baines
  */
 public class Database {
-    private MySQLHandler mySQLHandler = null;  // MySQLHandler instance
-    private MessageStore messageStore = null;  // MessageStore instance
-    private KeyStore keyStore = null;          // KeyStore instance
+    protected MySQLHandler mySQLHandler = null;   // MySQLHandler instance
+    protected MessageStore messageStore = null;   // MessageStore instance
+    protected KeyStore keyStore = null;           // KeyStore instance
+    private final ExpirationManager expirationManager;  // The expiration manager
 
     /**
      * Default constructor
@@ -33,6 +34,11 @@ public class Database {
 
         // Ensure that all the systems have been initialised correctly
         assert this.mySQLHandler != null && this.messageStore != null && this.keyStore != null;
+
+        // Start the expiration manager
+        expirationManager = new ExpirationManager(this);
+        expirationManager.setDaemon(true);
+        expirationManager.start();
     }
 
     /**
