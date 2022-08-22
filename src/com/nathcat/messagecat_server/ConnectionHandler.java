@@ -3,16 +3,11 @@ package com.nathcat.messagecat_server;
 import com.nathcat.RSA.*;
 import com.nathcat.messagecat_database.Result;
 import com.nathcat.messagecat_database_entities.*;
-import jdk.jshell.spi.ExecutionControl;
 import org.json.simple.JSONObject;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.net.SocketException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 
 /**
  * Maintains a connection with the client device
