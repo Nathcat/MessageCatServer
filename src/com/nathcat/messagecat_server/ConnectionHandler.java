@@ -1,6 +1,7 @@
 package com.nathcat.messagecat_server;
 
 import com.nathcat.RSA.*;
+import com.nathcat.messagecat_database.MessageQueue;
 import com.nathcat.messagecat_database.Result;
 import com.nathcat.messagecat_database_entities.*;
 import org.json.simple.JSONObject;
@@ -113,17 +114,7 @@ public class ConnectionHandler extends Handler {
             try {
                 JSONObject request = (JSONObject) this.keyPair.decryptBigObject((EncryptedObject[]) this.Receive());
                 Object response = this.HandleRequest(request);
-                this.Send(this.clientKeyPair.encryptBigObject(response));
-                /*
-                if (response == null) {
-                    this.Send(this.clientKeyPair.encrypt(response));
-                }
-                else if (response.getClass() == KeyPair.class) {
-                    this.Send(this.clientKeyPair.encryptBigObject(response));
-                }
-                else {
-                    this.Send(this.clientKeyPair.encrypt(response));
-                }*/
+                this.Send(this.clientKeyPair.encryptBigObject(new ObjectContainer(response)));
 
             } catch (PrivateKeyException | PublicKeyException | IOException | ClassNotFoundException e) {
                 this.DebugLog("Exception in main protocol: " + e.getMessage());
@@ -140,6 +131,11 @@ public class ConnectionHandler extends Handler {
      */
     private Object HandleRequest(JSONObject request) {
         this.request = request;
+
+        if (request == null) {
+            this.Close();
+            return null;
+        }
 
         switch ((RequestType) request.get("type")) {
             case Authenticate -> {
@@ -216,7 +212,7 @@ public class ConnectionHandler extends Handler {
 
     private Object Authenticate() {
         // Get the authentication data from the request
-        User authData = (User) this.request.get("data");
+        User authData = (User) ((ObjectContainer) this.request.get("data")).obj;
 
         // Get the corresponding user from the database (by username)
         User user = this.server.db.GetUserByUsername(authData.Username);
@@ -244,7 +240,7 @@ public class ConnectionHandler extends Handler {
         }
 
         // Get the user from the request and decrypt
-        User requestedUser = (User) this.request.get("data");
+        User requestedUser = (User) ((ObjectContainer) this.request.get("data")).obj;
 
         // Get the selector
         String selector = (String) this.request.get("selector");
@@ -289,7 +285,7 @@ public class ConnectionHandler extends Handler {
         }
 
         // Get the friendship from the request and decrypt
-        Friendship requestedFriendship = (Friendship) this.request.get("data");
+        Friendship requestedFriendship = (Friendship) ((ObjectContainer) this.request.get("data")).obj;
 
         // Get the selector
         String selector = (String) this.request.get("selector");
@@ -320,7 +316,7 @@ public class ConnectionHandler extends Handler {
         }
 
         // Get the friend request from the request and decrypt it
-        FriendRequest requestedFriendRequest = (FriendRequest) this.request.get("data");
+        FriendRequest requestedFriendRequest = (FriendRequest) ((ObjectContainer) this.request.get("data")).obj;
 
         // Get the selector
         String selector = (String) this.request.get("selector");
@@ -349,7 +345,7 @@ public class ConnectionHandler extends Handler {
         }
 
         // Get the chat from the request and decrypt
-        Chat requestedChat = (Chat) this.request.get("data");
+        Chat requestedChat = (Chat) ((ObjectContainer) this.request.get("data")).obj;
 
         // Search the database and return the result
         return this.server.db.GetChatByID(requestedChat.ChatID);
@@ -361,7 +357,7 @@ public class ConnectionHandler extends Handler {
         }
 
         // Get the chat invite from the request and decrypt it
-        ChatInvite requestedChatInvite = (ChatInvite) this.request.get("data");
+        ChatInvite requestedChatInvite = (ChatInvite) ((ObjectContainer) this.request.get("data")).obj;
 
         // Get the selector
         String selector = (String) this.request.get("selector");
@@ -393,7 +389,7 @@ public class ConnectionHandler extends Handler {
         }
 
         // Get the public key id from the request
-        int keyID = (int) this.request.get("data");
+        int keyID = (int) ((ObjectContainer) this.request.get("data")).obj;
 
         // Get the key pair from the database
         return this.server.db.GetKeyPair(keyID);
@@ -405,7 +401,7 @@ public class ConnectionHandler extends Handler {
         }
 
         // Get the chat id from the request
-        int chatID = (int) this.request.get("data");
+        int chatID = (int) ((ObjectContainer) this.request.get("data")).obj;
 
         // Get the message queue
         return this.server.db.GetMessageQueue(chatID);
@@ -413,7 +409,11 @@ public class ConnectionHandler extends Handler {
 
     private Object AddUser() {
         // Get the user from the request and decrypt
-        User newUser = (User) this.request.get("data");
+        User newUser = (User) ((ObjectContainer) this.request.get("data")).obj;
+
+        if (this.server.db.GetUserByDisplayName(newUser.DisplayName) != null || this.server.db.GetUserByUsername(newUser.Username) != null) {
+            return null;
+        }
 
         // Add the new user through the database
         this.server.db.AddUser(newUser);
@@ -428,17 +428,19 @@ public class ConnectionHandler extends Handler {
         }
 
         // Create a new public key
-        KeyPair chatKeyPair = (KeyPair) this.request.get("keyPair");
-        this.DebugLog(chatKeyPair.toString());
-        this.DebugLog(String.valueOf(chatKeyPair.hashCode()));
+        KeyPair chatKeyPair = (KeyPair) ((ObjectContainer) this.request.get("keyPair")).obj;
 
         // Get the chat from the request and decrypt
-        Chat newChat = (Chat) this.request.get("data");
+        Chat newChat = (Chat) ((ObjectContainer) this.request.get("data")).obj;
         newChat = new Chat(newChat.ChatID, newChat.Name, newChat.Description, chatKeyPair.hashCode());
 
-        // Add the chat and public key to the database
+        // Create a new message queue
+        MessageQueue messageQueue = new MessageQueue(newChat.ChatID);
+
+        // Add the chat, public key, and message queue to the database
         this.server.db.AddChat(newChat);
         this.server.db.AddKeyPair(chatKeyPair);
+        this.server.db.AddMessageQueue(messageQueue);
 
         // Send the new chat back to the client
         return this.server.db.GetChatByPublicKeyID(chatKeyPair.hashCode());
@@ -450,7 +452,12 @@ public class ConnectionHandler extends Handler {
         }
 
         // Get the friend request from the request, since the data contained are all integers we do not need to decrypt
-        FriendRequest fr = (FriendRequest) this.request.get("data");
+        FriendRequest fr = (FriendRequest) ((ObjectContainer) this.request.get("data")).obj;
+
+        // Check if the two users involved are already friends
+        if (this.server.db.GetFriendshipByUserIDAndFriendID(fr.SenderID, fr.RecipientID) != null) {
+            return "done";
+        }
 
         // Create the friend objects
         Friendship friendA = new Friendship(-1, fr.SenderID, fr.RecipientID, "");
@@ -475,7 +482,7 @@ public class ConnectionHandler extends Handler {
         }
 
         // Get the friend request from the request, since the data contained are all integers we do not need to decrypt
-        FriendRequest fr = (FriendRequest) this.request.get("data");
+        FriendRequest fr = (FriendRequest) ((ObjectContainer) this.request.get("data")).obj;
 
         // Delete the friend requests from the database
         if (this.server.db.DeleteFriendRequest(fr.FriendRequestID) == Result.FAILED) {
@@ -491,8 +498,9 @@ public class ConnectionHandler extends Handler {
             return null;
         }
 
+        this.DebugLog("Accept chat invite!");
         // Get the chat invite from the request and the private key from the database
-        ChatInvite ci = (ChatInvite) this.request.get("data");
+        ChatInvite ci = (ChatInvite) ((ObjectContainer) this.request.get("data")).obj;
         KeyPair privateKey = this.server.db.GetKeyPair(ci.PrivateKeyID);
 
         // Delete the chat invite from the database
@@ -509,7 +517,7 @@ public class ConnectionHandler extends Handler {
         }
 
         // Get the chat invite from the request and the private key from the database
-        ChatInvite ci = (ChatInvite) this.request.get("data");
+        ChatInvite ci = (ChatInvite) ((ObjectContainer) this.request.get("data")).obj;
 
         // Delete the chat invite from the database
         if (this.server.db.DeleteChatInvite(ci.ChatInviteID) == Result.FAILED || this.server.db.RemoveKeyPair(ci.PrivateKeyID) == Result.FAILED) {
@@ -525,7 +533,7 @@ public class ConnectionHandler extends Handler {
         }
 
         // Get the message from the database
-        Message message = (Message) this.request.get("data");
+        Message message = (Message) ((ObjectContainer) this.request.get("data")).obj;
 
         // Add the message to the database
         this.server.db.GetMessageQueue(message.ChatID).Push(message);
@@ -540,7 +548,7 @@ public class ConnectionHandler extends Handler {
         }
 
         // Get the friend request from the request
-        FriendRequest fr = (FriendRequest) this.request.get("data");
+        FriendRequest fr = (FriendRequest) ((ObjectContainer) this.request.get("data")).obj;
 
         // Add the request to the database
         if (this.server.db.AddFriendRequest(fr) == Result.FAILED) {
@@ -556,8 +564,9 @@ public class ConnectionHandler extends Handler {
         }
 
         // Get the chat invite and public key from the request
-        ChatInvite chatInvite = (ChatInvite) this.request.get("data");
+        ChatInvite chatInvite = (ChatInvite) ((ObjectContainer) this.request.get("data")).obj;
         KeyPair privateKey = (KeyPair) this.request.get("keyPair");
+        chatInvite = new ChatInvite(chatInvite.ChatInviteID, chatInvite.ChatID, chatInvite.SenderID, chatInvite.RecipientID, chatInvite.TimeSent, privateKey.hashCode());
 
         // Add the chat invite and private key to the database
         if (this.server.db.AddKeyPair(privateKey) == Result.FAILED || this.server.db.AddChatInvite(chatInvite) == Result.FAILED) {
