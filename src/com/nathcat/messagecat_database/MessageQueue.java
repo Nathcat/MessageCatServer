@@ -11,7 +11,7 @@ import java.io.Serializable;
  */
 public class MessageQueue implements Serializable {
     public final int ChatID;       // The ID of the chat this queue is linked to
-    private final Message[] data;  // The array of messages in this chat
+    private Message[] data;  // The array of messages in this chat
 
     /**
      * Default constructor
@@ -43,7 +43,17 @@ public class MessageQueue implements Serializable {
         System.arraycopy(this.data, 0, oldData, 0, 50);
 
         // Copy the old data into the array, with an offset of one index
+        this.data = new Message[50];
         System.arraycopy(oldData, 0, this.data, 1, 49);
+    }
+
+    /**
+     * Get the message at index i from the data array
+     * @param i The index to get
+     * @return The message object at that index
+     */
+    public Message Get(int i) {
+        return this.data[i];
     }
 
     /**

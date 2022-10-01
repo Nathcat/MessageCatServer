@@ -11,9 +11,9 @@ public class Message implements Serializable {
     public final int SenderID;
     public final int ChatID;
     public final long TimeSent;
-    public final String Content;
+    public final Object Content;
 
-    public Message(int senderID, int chatID, long timeSent, String content) {
+    public Message(int senderID, int chatID, long timeSent, Object content) {
         SenderID = senderID;
         ChatID = chatID;
         TimeSent = timeSent;

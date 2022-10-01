@@ -51,6 +51,8 @@ public class KeyStore {
     public void WriteToFile() throws IOException {
         ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("Assets/Data/KeyStore.bin"));
         oos.writeObject(data);
+        oos.flush();
+        oos.close();
     }
 
     /**

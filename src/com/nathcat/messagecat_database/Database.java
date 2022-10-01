@@ -42,6 +42,20 @@ public class Database {
     }
 
     /**
+     * @see MessageStore#WriteToFile()
+     * @see KeyStore#WriteToFile()
+     */
+    public void SaveKeyAndMessageStore() {
+        try {
+            this.messageStore.WriteToFile();
+            this.keyStore.WriteToFile();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
      * @see com.nathcat.messagecat_database.MySQLHandler#GetUserByID(int)
      */
     public User GetUserByID(int UserID) {

@@ -49,6 +49,8 @@ public class MessageStore {
     public void WriteToFile() throws IOException {
         ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("Assets/Data/MessageStore.bin"));
         oos.writeObject(data);
+        oos.flush();
+        oos.close();
     }
 
     /**

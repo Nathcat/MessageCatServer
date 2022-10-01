@@ -137,7 +137,18 @@ public class ConnectionHandler extends Handler {
             return null;
         }
 
-        switch ((RequestType) request.get("type")) {
+        RequestType type;
+
+        if (request.get("type").getClass() == ObjectContainer.class) {
+            type = (RequestType) ((ObjectContainer) request.get("type")).obj;
+        }
+        else {
+            type = (RequestType) request.get("type");
+        }
+
+        this.DebugLog(type.toString());
+
+        switch (type) {
             case Authenticate -> {
                 return this.Authenticate();
             }
@@ -392,7 +403,7 @@ public class ConnectionHandler extends Handler {
         int keyID = (int) ((ObjectContainer) this.request.get("data")).obj;
 
         // Get the key pair from the database
-        return this.server.db.GetKeyPair(keyID);
+        return new ObjectContainer(this.server.db.GetKeyPair(keyID));
     }
 
     private Object GetMessageQueue() {
@@ -404,7 +415,7 @@ public class ConnectionHandler extends Handler {
         int chatID = (int) ((ObjectContainer) this.request.get("data")).obj;
 
         // Get the message queue
-        return this.server.db.GetMessageQueue(chatID);
+        return new ObjectContainer(new ObjectContainer(this.server.db.GetMessageQueue(chatID)));
     }
 
     private Object AddUser() {
@@ -434,12 +445,13 @@ public class ConnectionHandler extends Handler {
         Chat newChat = (Chat) ((ObjectContainer) this.request.get("data")).obj;
         newChat = new Chat(newChat.ChatID, newChat.Name, newChat.Description, chatKeyPair.hashCode());
 
-        // Create a new message queue
-        MessageQueue messageQueue = new MessageQueue(newChat.ChatID);
-
         // Add the chat, public key, and message queue to the database
         this.server.db.AddChat(newChat);
         this.server.db.AddKeyPair(chatKeyPair);
+        // Get the chat from the database, so we know it's ID
+        newChat = this.server.db.GetChatByPublicKeyID(newChat.PublicKeyID);
+        // Create a new message queue
+        MessageQueue messageQueue = new MessageQueue(newChat.ChatID);
         this.server.db.AddMessageQueue(messageQueue);
 
         // Send the new chat back to the client
@@ -534,9 +546,11 @@ public class ConnectionHandler extends Handler {
 
         // Get the message from the database
         Message message = (Message) ((ObjectContainer) this.request.get("data")).obj;
+        this.DebugLog(message.toString());
 
         // Add the message to the database
         this.server.db.GetMessageQueue(message.ChatID).Push(message);
+        this.server.db.SaveKeyAndMessageStore();
 
         // Reply to the client
         return "done";
