@@ -16,6 +16,8 @@ public enum RequestType {
     GetMessageQueue,
     AddUser,
     AddChat,
+    AddListenRule,
+    RemoveListenRule,
     AcceptFriendRequest,
     DeclineFriendRequest,
     AcceptChatInvite,

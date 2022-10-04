@@ -12,11 +12,36 @@ import java.util.HashMap;
  */
 public class KeyStore {
     private HashMap<Integer, KeyPair> data;
+    private File dataFile;
 
     /**
      * Default constructor
      */
     public KeyStore() throws IOException {
+        dataFile = new File("Assets/Data/KeyStore.bin");
+
+        try {
+            // Try to read the data file
+            data = this.ReadFromFile();
+
+        } catch (FileNotFoundException e) {  // Thrown if the file does not exist
+            // Create a new empty hash map and create a new file for it
+            data = new HashMap<Integer, KeyPair>();
+            this.WriteToFile();
+
+        } catch (IOException | ClassNotFoundException e) {  // Potentially thrown by I/O operations
+            e.printStackTrace();
+        }
+
+        assert this.data != null;
+    }
+
+    /**
+     * Default constructor
+     */
+    public KeyStore(File file) throws IOException {
+        this.dataFile = file;
+
         try {
             // Try to read the data file
             data = this.ReadFromFile();
@@ -40,7 +65,7 @@ public class KeyStore {
      * @throws ClassNotFoundException Thrown if the Serialized class cannot be found
      */
     public HashMap<Integer, KeyPair> ReadFromFile() throws IOException, ClassNotFoundException {
-        ObjectInputStream ois = new ObjectInputStream(new FileInputStream("Assets/Data/KeyStore.bin"));
+        ObjectInputStream ois = new ObjectInputStream(new FileInputStream(this.dataFile));
         return (HashMap<Integer, KeyPair>) ois.readObject();
     }
 
@@ -49,7 +74,7 @@ public class KeyStore {
      * @throws IOException Can be thrown by I/O operations
      */
     public void WriteToFile() throws IOException {
-        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("Assets/Data/KeyStore.bin"));
+        ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(this.dataFile));
         oos.writeObject(data);
         oos.flush();
         oos.close();

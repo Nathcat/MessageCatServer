@@ -108,6 +108,7 @@ public class Handler extends Thread {
      * Parse an RSA string, i.e a string of RSA encrypted chars separated by a ',' character.
      * @param s The RSA string to parse
      * @return BigInteger array of encrypted chars
+     * @deprecated
      */
     public BigInteger[] ParseRSAString(String s) {
         String[] splitString = s.split(",");

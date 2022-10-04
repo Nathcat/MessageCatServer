@@ -189,6 +189,14 @@ public class ConnectionHandler extends Handler {
                 return this.AddChat();
             }
 
+            case AddListenRule -> {
+                return this.AddListenRule();
+            }
+
+            case RemoveListenRule -> {
+                return this.RemoveListenRule();
+            }
+
             case AcceptFriendRequest -> {
                 return this.AcceptFriendRequest();
             }
@@ -458,6 +466,44 @@ public class ConnectionHandler extends Handler {
         return this.server.db.GetChatByPublicKeyID(chatKeyPair.hashCode());
     }
 
+    private Object AddListenRule() {
+        if (!this.authenticated) {
+            return null;
+        }
+
+        // Get the listen rule object from the request
+        ListenRule listenRule = (ListenRule) ((ObjectContainer) this.request.get("data")).obj;
+        try {
+            // Assign an id to the listen rule and add the rule to the list
+            listenRule.setId(this.server.listenRules.size());
+            this.server.listenRules.add(listenRule);
+            // Return the id of the listen rule
+            return listenRule.getId();
+
+        } catch (IDAlreadySetException e) {
+            e.printStackTrace();
+            return "failed";
+        }
+    }
+
+    private Object RemoveListenRule() {
+        if (!this.authenticated) {
+            return null;
+        }
+
+        int id = (int) ((ObjectContainer) this.request.get("data")).obj;
+        boolean found = false;
+        for (int i = 0; i < this.server.listenRules.size(); i++) {
+            if (this.server.listenRules.get(i).getId() == id) {
+                this.server.listenRules.remove(i);
+                found = true;
+                break;
+            }
+        }
+
+        return found ? "done" : "failed";
+    }
+
     private Object AcceptFriendRequest() {
         if (!this.authenticated) {
             return null;
@@ -465,6 +511,15 @@ public class ConnectionHandler extends Handler {
 
         // Get the friend request from the request, since the data contained are all integers we do not need to decrypt
         FriendRequest fr = (FriendRequest) ((ObjectContainer) this.request.get("data")).obj;
+
+        // Check if this request triggers any listen rules
+        for (ListenRule rule : this.server.listenRules) {
+            try {
+                if (rule.CheckRequest(RequestType.AcceptFriendRequest, fr)) {
+                    rule.handler.Send(rule.handler.clientKeyPair.encryptBigObject(this.request));
+                }
+            } catch (IllegalAccessException | NoSuchFieldException | PublicKeyException | IOException ignored) {}
+        }
 
         // Check if the two users involved are already friends
         if (this.server.db.GetFriendshipByUserIDAndFriendID(fr.SenderID, fr.RecipientID) != null) {
@@ -510,10 +565,18 @@ public class ConnectionHandler extends Handler {
             return null;
         }
 
-        this.DebugLog("Accept chat invite!");
         // Get the chat invite from the request and the private key from the database
         ChatInvite ci = (ChatInvite) ((ObjectContainer) this.request.get("data")).obj;
         KeyPair privateKey = this.server.db.GetKeyPair(ci.PrivateKeyID);
+
+        // Check if this request triggers any listen rules
+        for (ListenRule rule : this.server.listenRules) {
+            try {
+                if (rule.CheckRequest(RequestType.AcceptChatInvite, ci)) {
+                    rule.handler.Send(rule.handler.clientKeyPair.encryptBigObject(this.request));
+                }
+            } catch (IllegalAccessException | NoSuchFieldException | PublicKeyException | IOException ignored) {}
+        }
 
         // Delete the chat invite from the database
         if (this.server.db.DeleteChatInvite(ci.ChatInviteID) == Result.FAILED || this.server.db.RemoveKeyPair(ci.PrivateKeyID) == Result.FAILED) {
@@ -546,7 +609,15 @@ public class ConnectionHandler extends Handler {
 
         // Get the message from the database
         Message message = (Message) ((ObjectContainer) this.request.get("data")).obj;
-        this.DebugLog(message.toString());
+
+        // Check if this request triggers any listen rules
+        for (ListenRule rule : this.server.listenRules) {
+            try {
+                if (rule.CheckRequest(RequestType.SendMessage, message)) {
+                    rule.handler.Send(rule.handler.clientKeyPair.encryptBigObject(this.request));
+                }
+            } catch (IllegalAccessException | NoSuchFieldException | PublicKeyException | IOException ignored) {}
+        }
 
         // Add the message to the database
         this.server.db.GetMessageQueue(message.ChatID).Push(message);
@@ -563,6 +634,15 @@ public class ConnectionHandler extends Handler {
 
         // Get the friend request from the request
         FriendRequest fr = (FriendRequest) ((ObjectContainer) this.request.get("data")).obj;
+
+        // Check if this request triggers any listen rules
+        for (ListenRule rule : this.server.listenRules) {
+            try {
+                if (rule.CheckRequest(RequestType.SendFriendRequest, fr)) {
+                    rule.handler.Send(rule.handler.clientKeyPair.encryptBigObject(this.request));
+                }
+            } catch (IllegalAccessException | NoSuchFieldException | PublicKeyException | IOException ignored) {}
+        }
 
         // Add the request to the database
         if (this.server.db.AddFriendRequest(fr) == Result.FAILED) {
@@ -581,6 +661,15 @@ public class ConnectionHandler extends Handler {
         ChatInvite chatInvite = (ChatInvite) ((ObjectContainer) this.request.get("data")).obj;
         KeyPair privateKey = (KeyPair) this.request.get("keyPair");
         chatInvite = new ChatInvite(chatInvite.ChatInviteID, chatInvite.ChatID, chatInvite.SenderID, chatInvite.RecipientID, chatInvite.TimeSent, privateKey.hashCode());
+
+        // Check if this request triggers any listen rules
+        for (ListenRule rule : this.server.listenRules) {
+            try {
+                if (rule.CheckRequest(RequestType.SendChatInvite, chatInvite)) {
+                    rule.handler.Send(rule.handler.clientKeyPair.encryptBigObject(this.request));
+                }
+            } catch (IllegalAccessException | NoSuchFieldException | PublicKeyException | IOException ignored) {}
+        }
 
         // Add the chat invite and private key to the database
         if (this.server.db.AddKeyPair(privateKey) == Result.FAILED || this.server.db.AddChatInvite(chatInvite) == Result.FAILED) {
