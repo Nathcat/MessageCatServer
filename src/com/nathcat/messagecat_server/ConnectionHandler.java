@@ -473,6 +473,7 @@ public class ConnectionHandler extends Handler {
 
         // Get the listen rule object from the request
         ListenRule listenRule = (ListenRule) ((ObjectContainer) this.request.get("data")).obj;
+        listenRule.handler =  this;
         try {
             // Assign an id to the listen rule and add the rule to the list
             listenRule.setId(this.server.listenRules.size());
@@ -480,7 +481,7 @@ public class ConnectionHandler extends Handler {
             // Return the id of the listen rule
             return listenRule.getId();
 
-        } catch (IDAlreadySetException e) {
+        } catch (ListenRule.IDAlreadySetException e) {
             e.printStackTrace();
             return "failed";
         }
@@ -516,7 +517,7 @@ public class ConnectionHandler extends Handler {
         for (ListenRule rule : this.server.listenRules) {
             try {
                 if (rule.CheckRequest(RequestType.AcceptFriendRequest, fr)) {
-                    rule.handler.Send(rule.handler.clientKeyPair.encryptBigObject(this.request));
+                    rule.handler.Send(rule.handler.clientKeyPair.encryptBigObject(new ObjectContainer(this.request)));
                 }
             } catch (IllegalAccessException | NoSuchFieldException | PublicKeyException | IOException ignored) {}
         }
@@ -573,7 +574,7 @@ public class ConnectionHandler extends Handler {
         for (ListenRule rule : this.server.listenRules) {
             try {
                 if (rule.CheckRequest(RequestType.AcceptChatInvite, ci)) {
-                    rule.handler.Send(rule.handler.clientKeyPair.encryptBigObject(this.request));
+                    rule.handler.Send(rule.handler.clientKeyPair.encryptBigObject(new ObjectContainer(this.request)));
                 }
             } catch (IllegalAccessException | NoSuchFieldException | PublicKeyException | IOException ignored) {}
         }
@@ -614,7 +615,7 @@ public class ConnectionHandler extends Handler {
         for (ListenRule rule : this.server.listenRules) {
             try {
                 if (rule.CheckRequest(RequestType.SendMessage, message)) {
-                    rule.handler.Send(rule.handler.clientKeyPair.encryptBigObject(this.request));
+                    rule.handler.Send(rule.handler.clientKeyPair.encryptBigObject(new ObjectContainer(this.request)));
                 }
             } catch (IllegalAccessException | NoSuchFieldException | PublicKeyException | IOException ignored) {}
         }
@@ -639,7 +640,7 @@ public class ConnectionHandler extends Handler {
         for (ListenRule rule : this.server.listenRules) {
             try {
                 if (rule.CheckRequest(RequestType.SendFriendRequest, fr)) {
-                    rule.handler.Send(rule.handler.clientKeyPair.encryptBigObject(this.request));
+                    rule.handler.Send(rule.handler.clientKeyPair.encryptBigObject(new ObjectContainer(this.request)));
                 }
             } catch (IllegalAccessException | NoSuchFieldException | PublicKeyException | IOException ignored) {}
         }
@@ -666,7 +667,7 @@ public class ConnectionHandler extends Handler {
         for (ListenRule rule : this.server.listenRules) {
             try {
                 if (rule.CheckRequest(RequestType.SendChatInvite, chatInvite)) {
-                    rule.handler.Send(rule.handler.clientKeyPair.encryptBigObject(this.request));
+                    rule.handler.Send(rule.handler.clientKeyPair.encryptBigObject(new ObjectContainer(this.request)));
                 }
             } catch (IllegalAccessException | NoSuchFieldException | PublicKeyException | IOException ignored) {}
         }

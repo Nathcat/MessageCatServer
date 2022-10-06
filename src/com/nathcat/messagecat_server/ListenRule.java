@@ -1,5 +1,6 @@
 package com.nathcat.messagecat_server;
 
+import java.io.Serializable;
 import java.lang.reflect.Field;
 
 /**
@@ -9,20 +10,32 @@ import java.lang.reflect.Field;
  * @author Nathan "Nathcat" Baines
  */
 
-public class ListenRule {
+public class ListenRule implements Serializable {
+    public class IDAlreadySetException extends Exception { }
+
     private int id = -1;                // Unique identifier for this listening rule
     public ConnectionHandler handler;   // Handler which is handling the client this listen rule was created by
     private RequestType listenForType;  // The request type which this listen rule is listening for
 
     // The listen rule will only be triggered if the data in fieldToMatch matches the data in objectToMatch
-    private Field fieldToMatch;
+    private String fieldNameToMatch;
     private Object objectToMatch;
 
-    public ListenRule(ConnectionHandler handler, RequestType listenForType, Field fieldToMatch, Object objectToMatch) {
+    public ListenRule(ConnectionHandler handler, RequestType listenForType, String fieldNameToMatch, Object objectToMatch) {
         this.handler = handler;
         this.listenForType = listenForType;
-        this.fieldToMatch = fieldToMatch;
+        this.fieldNameToMatch = fieldNameToMatch;
         this.objectToMatch = objectToMatch;
+    }
+
+    public ListenRule(RequestType listenForType, String fieldNameToMatch, Object objectToMatch) {
+        this.listenForType = listenForType;
+        this.fieldNameToMatch = fieldNameToMatch;
+        this.objectToMatch = objectToMatch;
+    }
+
+    public ListenRule(RequestType listenForType) {
+        this.listenForType = listenForType;
     }
 
     public int getId() {
@@ -44,11 +57,12 @@ public class ListenRule {
      * @return True if the listen rule criteria is met, False if not.
      */
     public boolean CheckRequest(RequestType type, Object data) throws NoSuchFieldException, IllegalAccessException {
+        if (fieldNameToMatch == null) {
+            return type == listenForType;
+        }
+
         return type == listenForType && data.getClass()  // Compare request type to the type we are listening for and get the class object of data
-                .getField(fieldToMatch.getName())        // Get the field we are comparing
-                .get(data) == objectToMatch;             // Get the data from the field in the instance of data and compare to objectToMatch
+                .getField(fieldNameToMatch)              // Get the field we are comparing
+                .get(data).equals(objectToMatch);        // Get the data from the field in the instance of data and compare to objectToMatch
     }
 }
-
-
-class IDAlreadySetException extends Exception { }

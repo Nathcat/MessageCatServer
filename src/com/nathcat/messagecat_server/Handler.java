@@ -102,6 +102,19 @@ public class Handler extends Thread {
         } catch (IOException e) {
             this.DebugLog("Failed to close socket (" + e.getMessage() + ")");
         }
+
+        boolean emptyPass = false;
+        while (!emptyPass) {
+            emptyPass = true;
+
+            for (int i = 0 ; i < this.server.listenRules.size(); i++) {
+                if (this.server.listenRules.get(i).handler.equals(this)) {
+                    this.server.listenRules.remove(i);
+                    emptyPass = false;
+                    break;
+                }
+            }
+        }
     }
 
     /**
