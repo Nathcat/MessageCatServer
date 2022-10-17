@@ -1,6 +1,7 @@
 package com.nathcat.messagecat_database;
 
 import com.nathcat.messagecat_database_entities.Message;
+import com.nathcat.messagecat_server.Queue;
 
 import java.io.Serializable;
 
@@ -11,7 +12,7 @@ import java.io.Serializable;
  */
 public class MessageQueue implements Serializable {
     public final int ChatID;       // The ID of the chat this queue is linked to
-    private Message[] data;  // The array of messages in this chat
+    private Queue data;            // The Queue which will be used to store data
 
     /**
      * Default constructor
@@ -19,7 +20,7 @@ public class MessageQueue implements Serializable {
      */
     public MessageQueue(int ChatID) {
         this.ChatID = ChatID;
-        data = new Message[50];  // Create an array of size 50
+        data = new Queue(10);
     }
 
     /**
@@ -27,24 +28,14 @@ public class MessageQueue implements Serializable {
      * @param message The new message
      */
     public void Push(Message message) {
-        // Pop an item off the front of the queue
-        this.Pop();
-
-        // Assign the new message to the first index of the array
-        this.data[0] = message;
+        this.data.Push(message);
     }
 
     /**
      * Remove the item at the front of the queue
      */
     public void Pop() {
-        // Create a copy of the data array, without any references
-        Message[] oldData = new Message[50];
-        System.arraycopy(this.data, 0, oldData, 0, 50);
-
-        // Copy the old data into the array, with an offset of one index
-        this.data = new Message[50];
-        System.arraycopy(oldData, 0, this.data, 1, 49);
+        this.data.Pop();
     }
 
     /**
@@ -53,7 +44,7 @@ public class MessageQueue implements Serializable {
      * @return The message object at that index
      */
     public Message Get(int i) {
-        return this.data[i];
+        return (Message) this.data.Get(i);
     }
 
     /**
@@ -63,11 +54,11 @@ public class MessageQueue implements Serializable {
     public String[] GetJSONString() {
         String[] result = new String[50];
         for (int i = 0; i < 50; i++) {
-            if (this.data[i] == null) {
+            if (this.data.Get(i) == null) {
                 continue;
             }
 
-            result[i] = this.data[i].GetJSONObject().toJSONString();
+            result[i] = ((Message) this.data.Get(i)).GetJSONObject().toJSONString();
         }
 
         return result;

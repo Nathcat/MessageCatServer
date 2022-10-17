@@ -14,6 +14,7 @@ public class ListenRule implements Serializable {
     public class IDAlreadySetException extends Exception { }
 
     private int id = -1;                // Unique identifier for this listening rule
+    public int connectionHandlerId = -1;
     public ConnectionHandler handler;   // Handler which is handling the client this listen rule was created by
     private RequestType listenForType;  // The request type which this listen rule is listening for
 
@@ -28,6 +29,13 @@ public class ListenRule implements Serializable {
         this.objectToMatch = objectToMatch;
     }
 
+    public ListenRule(int connectionHandlerId, RequestType listenForType, String fieldNameToMatch, Object objectToMatch) {
+        this.listenForType = listenForType;
+        this.fieldNameToMatch = fieldNameToMatch;
+        this.objectToMatch = objectToMatch;
+        this.connectionHandlerId = connectionHandlerId;
+    }
+
     public ListenRule(RequestType listenForType, String fieldNameToMatch, Object objectToMatch) {
         this.listenForType = listenForType;
         this.fieldNameToMatch = fieldNameToMatch;
@@ -36,6 +44,11 @@ public class ListenRule implements Serializable {
 
     public ListenRule(RequestType listenForType) {
         this.listenForType = listenForType;
+    }
+
+    public ListenRule(int connectionHandlerId, RequestType listenForType) {
+        this.listenForType = listenForType;
+        this.connectionHandlerId = connectionHandlerId;
     }
 
     public int getId() {
