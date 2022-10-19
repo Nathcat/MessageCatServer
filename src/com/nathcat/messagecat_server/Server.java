@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 /**
@@ -24,6 +25,7 @@ public class Server {
     public final Handler[] connectionHandlerPool;
     public final QueueManager connectionHandlerQueueManager;
     public final Database db;
+    public final ArrayList<ListenRule> listenRules = new ArrayList<>();
 
     /**
      * Main entry point for the application

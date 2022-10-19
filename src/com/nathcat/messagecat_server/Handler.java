@@ -18,7 +18,7 @@ public class Handler extends Thread {
     public Socket socket;                  // The TCP/IP connection socket
     public ObjectOutputStream oos;         // Stream to output objects to through the socket
     public ObjectInputStream ois;          // Stream to receive objects from the socket
-    private final int threadNum;           // The thread number, used in debug messages
+    public final int threadNum;            // The thread number, used in debug messages
     private final String className;        // The name of the class to be used in debug messages
     public KeyPair keyPair;                // The encryption key pair to be used in communications
     public KeyPair clientKeyPair;          // The client's encryption key pair (will only contain the public key)
@@ -102,96 +102,17 @@ public class Handler extends Thread {
         } catch (IOException e) {
             this.DebugLog("Failed to close socket (" + e.getMessage() + ")");
         }
-    }
 
-    /**
-     * Parse an RSA string, i.e a string of RSA encrypted chars separated by a ',' character.
-     * @param s The RSA string to parse
-     * @return BigInteger array of encrypted chars
-     */
-    public BigInteger[] ParseRSAString(String s) {
-        String[] splitString = s.split(",");
-        BigInteger[] result = new BigInteger[splitString.length];
-        for (int i = 0; i < splitString.length; i++) {
-            result[i] = new BigInteger(splitString[i]);
-        }
+        boolean emptyPass = false;
+        while (!emptyPass) {
+            emptyPass = true;
 
-        return result;
-    }
-
-    /**
-     * Encrypt all the string fields of an object
-     * @param obj The object to encrypt
-     * @param out The object to output to
-     * @param keyPair The RSA key pair to encrypt with
-     * @param <T> The type of the object
-     * @deprecated No longer required as RSA library can now encrypt objects fully
-     */
-    public <T> void EncryptObjectFields(T obj, T out, KeyPair keyPair) {
-        // Get the fields of the object
-        Field[] fields = obj.getClass().getDeclaredFields();
-
-        for (Field field : fields) {
-            // Check that this field is a string type (otherwise it can't be encrypted)
-            try {
-                if (field.getType() == String.class && field.get(obj) != null) {
-                    try {
-                        // Encrypt the string to array of big integers
-                        BigInteger[] cipherArray = keyPair.encrypt(RSA.StringToBigIntegerArray((String) field.get(obj)));
-                        // Compile the result into a string
-                        StringBuilder result = new StringBuilder();
-                        for (BigInteger num : cipherArray) {
-                            result.append(num.toString());
-                            result.append(",");
-                        }
-
-                        result.deleteCharAt(result.lastIndexOf(","));
-
-                        // Assign the field
-                        field.set(out, result.toString());
-
-                    } catch (IllegalAccessException | PublicKeyException e) {
-                        this.DebugLog(e.getMessage());
-                    }
+            for (int i = 0 ; i < this.server.listenRules.size(); i++) {
+                if (this.server.listenRules.get(i).handler.equals(this)) {
+                    this.server.listenRules.remove(i);
+                    emptyPass = false;
+                    break;
                 }
-            } catch (IllegalAccessException e) {
-                this.DebugLog(e.getMessage());
-            }
-        }
-    }
-
-    /**
-     * Decrypt all the string fields of an object
-     * @param obj The object to Decrypt
-     * @param out The object to output to
-     * @param keyPair The RSA key pair to Decrypt with
-     * @param <T> The type of the object
-     * @deprecated No longer required as RSA library can now decrypt objects fully
-     */
-    public <T> void DecryptObjectFields(T obj, T out, KeyPair keyPair) {
-        // Get the fields of the object
-        Field[] fields = obj.getClass().getDeclaredFields();
-
-        for (Field field : fields) {
-            // Check that this field is a string type (otherwise it can't be decrypted)
-            try {
-                if (field.getType() == String.class && field.get(obj) != null) {
-                    try {
-                        // Parse the RSA encrypted string
-                        BigInteger[] cipherArray = this.ParseRSAString((String) field.get(obj));
-
-                        // Decrypt the cipher array
-                        BigInteger[] plainTextArray = keyPair.decrypt(cipherArray);
-
-                        // Assign the field
-                        field.set(out, RSA.BigIntegerArrayToString(plainTextArray));
-
-                    } catch (IllegalAccessException | PrivateKeyException e) {
-                        this.DebugLog(e.getMessage());
-                    }
-                }
-            } catch (IllegalAccessException e) {
-                this.DebugLog(e.getMessage());
             }
         }
     }
