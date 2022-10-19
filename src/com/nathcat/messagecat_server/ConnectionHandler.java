@@ -9,6 +9,8 @@ import org.json.simple.JSONObject;
 import java.io.IOException;
 import java.net.Socket;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * Maintains a connection with the client device
@@ -427,7 +429,7 @@ public class ConnectionHandler extends Handler {
         // Get the user from the request and decrypt
         User newUser = (User) this.request.get("data");
 
-        if (this.server.db.GetUserByDisplayName(newUser.DisplayName) != null || this.server.db.GetUserByUsername(newUser.Username) != null) {
+        if (!Arrays.equals(this.server.db.GetUserByDisplayName(newUser.DisplayName), new User[0]) || this.server.db.GetUserByUsername(newUser.Username) != null) {
             return null;
         }
 
@@ -470,6 +472,7 @@ public class ConnectionHandler extends Handler {
 
         // Get the listen rule object from the request
         ListenRule listenRule = (ListenRule) this.request.get("data");
+        this.DebugLog(String.valueOf(listenRule.connectionHandlerId));
         // Set the listen rule handler
         if (listenRule.connectionHandlerId == -1) {
             listenRule.handler = this;
@@ -483,7 +486,6 @@ public class ConnectionHandler extends Handler {
             listenRule.setId(this.server.listenRules.size());
             this.server.listenRules.add(listenRule);
             // Return the id of the listen rule
-            this.DebugLog(String.valueOf(listenRule.getId()));
             return listenRule.getId();
 
         } catch (ListenRule.IDAlreadySetException e) {
@@ -522,6 +524,7 @@ public class ConnectionHandler extends Handler {
         for (ListenRule rule : this.server.listenRules) {
             try {
                 if (rule.CheckRequest(RequestType.AcceptFriendRequest, fr)) {
+                    this.request.put("triggerID", rule.getId());
                     rule.handler.Send(rule.handler.clientKeyPair.encrypt(this.request));
                 }
             } catch (IllegalAccessException | NoSuchFieldException | PublicKeyException | IOException ignored) {}
@@ -579,6 +582,7 @@ public class ConnectionHandler extends Handler {
         for (ListenRule rule : this.server.listenRules) {
             try {
                 if (rule.CheckRequest(RequestType.AcceptChatInvite, ci)) {
+                    this.request.put("triggerID", rule.getId());
                     rule.handler.Send(rule.handler.clientKeyPair.encrypt(this.request));
                 }
             } catch (IllegalAccessException | NoSuchFieldException | PublicKeyException | IOException ignored) {}
@@ -620,7 +624,7 @@ public class ConnectionHandler extends Handler {
         for (ListenRule rule : this.server.listenRules) {
             try {
                 if (rule.CheckRequest(RequestType.SendMessage, message)) {
-                    this.DebugLog("Triggered listen rule");
+                    this.request.put("triggerID", rule.getId());
                     rule.handler.Send(rule.handler.clientKeyPair.encrypt(this.request));
                 }
             } catch (IllegalAccessException | NoSuchFieldException | PublicKeyException | IOException ignored) {}
@@ -674,6 +678,7 @@ public class ConnectionHandler extends Handler {
         for (ListenRule rule : this.server.listenRules) {
             try {
                 if (rule.CheckRequest(RequestType.SendChatInvite, chatInvite)) {
+                    this.request.put("triggerID", rule.getId());
                     rule.handler.Send(rule.handler.clientKeyPair.encrypt(this.request));
                 }
             } catch (IllegalAccessException | NoSuchFieldException | PublicKeyException | IOException ignored) {}
