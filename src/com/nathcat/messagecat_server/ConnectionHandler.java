@@ -7,6 +7,9 @@ import com.nathcat.messagecat_database_entities.*;
 import org.json.simple.JSONObject;
 
 import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -60,6 +63,18 @@ public class ConnectionHandler extends Handler {
 
             // Perform handshake
             if (this.DoHandshake()) {
+                // Open listen rule socket
+                try {
+                    int port = (int) this.keyPair.decrypt((EncryptedObject) this.Receive());
+                    this.lrSocket = new Socket(this.socket.getInetAddress().getHostAddress(), port);
+                    this.lrOos = new ObjectOutputStream(lrSocket.getOutputStream());
+
+                } catch (IOException | PrivateKeyException | ClassNotFoundException e) {
+                    e.printStackTrace();
+                    this.Close();
+                    return;
+                }
+
                 // Start connection main loop
                 this.MainLoop();
             }
@@ -472,7 +487,7 @@ public class ConnectionHandler extends Handler {
 
         // Get the listen rule object from the request
         ListenRule listenRule = (ListenRule) this.request.get("data");
-        this.DebugLog(String.valueOf(listenRule.connectionHandlerId));
+
         // Set the listen rule handler
         if (listenRule.connectionHandlerId == -1) {
             listenRule.handler = this;
@@ -525,7 +540,7 @@ public class ConnectionHandler extends Handler {
             try {
                 if (rule.CheckRequest(RequestType.AcceptFriendRequest, fr)) {
                     this.request.put("triggerID", rule.getId());
-                    rule.handler.Send(rule.handler.clientKeyPair.encrypt(this.request));
+                    rule.handler.LrSend(rule.handler.clientKeyPair.encrypt(this.request));
                 }
             } catch (IllegalAccessException | NoSuchFieldException | PublicKeyException | IOException ignored) {}
         }
@@ -583,7 +598,7 @@ public class ConnectionHandler extends Handler {
             try {
                 if (rule.CheckRequest(RequestType.AcceptChatInvite, ci)) {
                     this.request.put("triggerID", rule.getId());
-                    rule.handler.Send(rule.handler.clientKeyPair.encrypt(this.request));
+                    rule.handler.LrSend(rule.handler.clientKeyPair.encrypt(this.request));
                 }
             } catch (IllegalAccessException | NoSuchFieldException | PublicKeyException | IOException ignored) {}
         }
@@ -625,7 +640,7 @@ public class ConnectionHandler extends Handler {
             try {
                 if (rule.CheckRequest(RequestType.SendMessage, message)) {
                     this.request.put("triggerID", rule.getId());
-                    rule.handler.Send(rule.handler.clientKeyPair.encrypt(this.request));
+                    rule.handler.LrSend(rule.handler.clientKeyPair.encrypt(this.request));
                 }
             } catch (IllegalAccessException | NoSuchFieldException | PublicKeyException | IOException ignored) {}
         }
@@ -651,7 +666,7 @@ public class ConnectionHandler extends Handler {
             try {
                 if (rule.CheckRequest(RequestType.SendFriendRequest, fr)) {
                     this.request.put("triggerID", rule.getId());
-                    rule.handler.Send(rule.handler.clientKeyPair.encrypt(this.request));
+                    rule.handler.LrSend(rule.handler.clientKeyPair.encrypt(this.request));
                 }
             } catch (IllegalAccessException | NoSuchFieldException | PublicKeyException | IOException ignored) {}
         }
@@ -679,7 +694,7 @@ public class ConnectionHandler extends Handler {
             try {
                 if (rule.CheckRequest(RequestType.SendChatInvite, chatInvite)) {
                     this.request.put("triggerID", rule.getId());
-                    rule.handler.Send(rule.handler.clientKeyPair.encrypt(this.request));
+                    rule.handler.LrSend(rule.handler.clientKeyPair.encrypt(this.request));
                 }
             } catch (IllegalAccessException | NoSuchFieldException | PublicKeyException | IOException ignored) {}
         }
