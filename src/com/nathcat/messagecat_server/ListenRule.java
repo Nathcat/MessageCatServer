@@ -21,6 +21,7 @@ public class ListenRule implements Serializable {
     // The listen rule will only be triggered if the data in fieldToMatch matches the data in objectToMatch
     private String fieldNameToMatch;
     private Object objectToMatch;
+    private Object[] objectsToMatch;
 
     public ListenRule(ConnectionHandler handler, RequestType listenForType, String fieldNameToMatch, Object objectToMatch) {
         this.handler = handler;
@@ -40,6 +41,13 @@ public class ListenRule implements Serializable {
         this.listenForType = listenForType;
         this.fieldNameToMatch = fieldNameToMatch;
         this.objectToMatch = objectToMatch;
+        this.objectsToMatch = null;
+    }
+    public ListenRule(RequestType listenForType, String fieldNameToMatch, Object[] objectsToMatch) {
+        this.listenForType = listenForType;
+        this.fieldNameToMatch = fieldNameToMatch;
+        this.objectToMatch = null;
+        this.objectsToMatch = objectsToMatch;
     }
 
     public ListenRule(RequestType listenForType) {
@@ -74,8 +82,21 @@ public class ListenRule implements Serializable {
             return type == listenForType;
         }
 
-        return type == listenForType && data.getClass()  // Compare request type to the type we are listening for and get the class object of data
-                .getField(fieldNameToMatch)              // Get the field we are comparing
-                .get(data).equals(objectToMatch);        // Get the data from the field in the instance of data and compare to objectToMatch
+        if (objectToMatch != null) {
+            return type == listenForType && data.getClass()  // Compare request type to the type we are listening for and get the class object of data
+                    .getField(fieldNameToMatch)              // Get the field we are comparing
+                    .get(data).equals(objectToMatch);        // Get the data from the field in the instance of data and compare to objectToMatch
+        }
+        else {
+            boolean contains = false;
+            for (Object toMatch : objectsToMatch) {
+                if (data.getClass().getField(fieldNameToMatch).get(data).equals(toMatch)) {
+                    contains = true;
+                    break;
+                }
+            }
+
+            return type == listenForType && contains;
+        }
     }
 }

@@ -26,6 +26,8 @@ public class Handler extends Thread {
     public Server server;                  // Parent server object
     public Object queueObject;             // The object supplied to the handler from the QueueManager
     public boolean authenticated;          // Whether the connection is authenticated or not
+    public Socket lrSocket;                // A socket specifically for communicating listen rule triggers
+    public ObjectOutputStream lrOos;       // Stream to output objects to the lrSocket
 
     /**
      * Constructor method, assigns private and constant fields
@@ -83,6 +85,15 @@ public class Handler extends Thread {
     }
 
     /**
+     * Send an object via the listen rule socket
+     * @param obj The object to send
+     */
+    public void LrSend(Object obj) throws IOException {
+        lrOos.writeObject(obj);
+        lrOos.flush();
+    }
+
+    /**
      * Receive an object from the socket
      * @return The object that is received
      * @throws IOException Thrown if there is an I/O issue
@@ -98,8 +109,9 @@ public class Handler extends Thread {
     public void Close() {
         try {
             this.socket.close();
+            this.lrSocket.close();
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             this.DebugLog("Failed to close socket (" + e.getMessage() + ")");
         }
 
@@ -115,5 +127,7 @@ public class Handler extends Thread {
                 }
             }
         }
+
+        authenticated = false;
     }
 }
