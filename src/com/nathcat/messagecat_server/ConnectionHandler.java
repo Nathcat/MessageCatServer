@@ -64,7 +64,7 @@ public class ConnectionHandler extends Handler {
                 // Open listen rule socket
                 try {
                     int port = (int) this.keyPair.decrypt((EncryptedObject) this.Receive());
-                    this.lrSocket = new Socket(new Proxy(Proxy.Type.SOCKS, this.socket.getRemoteSocketAddress()));
+                    this.lrSocket = new Socket(new Proxy(Proxy.Type.SOCKS, new InetSocketAddress(this.socket.getInetAddress().getHostName(), port)));
                     this.lrSocket.connect(this.socket.getRemoteSocketAddress());
                     this.lrOos = new ObjectOutputStream(lrSocket.getOutputStream());
 
