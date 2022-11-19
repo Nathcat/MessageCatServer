@@ -140,7 +140,7 @@ public class ConnectionHandler extends Handler {
                 Object response = this.HandleRequest(request);
                 this.Send(this.clientKeyPair.encrypt(response));
 
-            } catch (PrivateKeyException | PublicKeyException | IOException | ClassNotFoundException e) {
+            } catch (Exception e) {
                 this.DebugLog("Exception in main protocol: " + e.getMessage());
                 this.Close();
                 return;

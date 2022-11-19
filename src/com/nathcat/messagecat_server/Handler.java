@@ -129,5 +129,6 @@ public class Handler extends Thread {
         }
 
         authenticated = false;
+        busy = false;
     }
 }
