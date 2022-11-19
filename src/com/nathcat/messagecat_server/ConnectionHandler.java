@@ -63,12 +63,12 @@ public class ConnectionHandler extends Handler {
             if (this.DoHandshake()) {
                 // Open listen rule socket
                 try {
-                    int port = (int) this.keyPair.decrypt((EncryptedObject) this.Receive());
-                    this.lrSocket = new Socket(new Proxy(Proxy.Type.SOCKS, new InetSocketAddress(this.socket.getInetAddress().getHostName(), port)));
-                    this.lrSocket.connect(this.socket.getRemoteSocketAddress());
+                    ServerSocket ss = new ServerSocket(0);
+                    this.Send(this.clientKeyPair.encrypt(ss.getLocalPort()));
+                    this.lrSocket = ss.accept();
                     this.lrOos = new ObjectOutputStream(lrSocket.getOutputStream());
 
-                } catch (IOException | PrivateKeyException | ClassNotFoundException e) {
+                } catch (IOException | PublicKeyException e) {
                     e.printStackTrace();
                     this.Close();
                     return;
