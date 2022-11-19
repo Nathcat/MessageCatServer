@@ -8,9 +8,7 @@ import org.json.simple.JSONObject;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Socket;
+import java.net.*;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Objects;
@@ -66,7 +64,8 @@ public class ConnectionHandler extends Handler {
                 // Open listen rule socket
                 try {
                     int port = (int) this.keyPair.decrypt((EncryptedObject) this.Receive());
-                    this.lrSocket = new Socket(this.socket.getInetAddress().getHostAddress(), port);
+                    this.lrSocket = new Socket(new Proxy(Proxy.Type.SOCKS, this.socket.getRemoteSocketAddress()));
+                    this.lrSocket.connect(this.socket.getRemoteSocketAddress());
                     this.lrOos = new ObjectOutputStream(lrSocket.getOutputStream());
 
                 } catch (IOException | PrivateKeyException | ClassNotFoundException e) {
