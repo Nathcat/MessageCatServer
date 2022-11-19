@@ -22,13 +22,13 @@ public class ExpirationManager extends Thread {
 
         // Check friend requests
         try {
-            rs = this.db.mySQLHandler.Select("select * from `friendrequests`");
+            rs = this.db.mySQLHandler.Select("select * from `FriendRequests`");
 
             while (rs.next()) {
                 long timeSent = rs.getLong("TimeSent");
                 long currentTime = new Date().getTime();
                 if (currentTime >= (timeSent + this.maxTimeElapsed)) {
-                    this.db.mySQLHandler.Update("delete from `friendrequests` where `FriendRequestID` like " + rs.getInt("FriendRequestID"));
+                    this.db.mySQLHandler.Update("delete from `FriendRequests` where `FriendRequestID` like " + rs.getInt("FriendRequestID"));
                 }
             }
 
@@ -38,14 +38,14 @@ public class ExpirationManager extends Thread {
 
         // Check chat invitations
         try {
-            rs = this.db.mySQLHandler.Select("select * from `chatinvitations`");
+            rs = this.db.mySQLHandler.Select("select * from `ChatInvitations`");
 
             while (rs.next()) {
                 long timeSent = rs.getLong("TimeSent");
                 long currentTime = new Date().getTime();
                 if (currentTime >= (timeSent + this.maxTimeElapsed)) {
                     this.db.keyStore.RemoveKeyPair(rs.getInt("PrivateKeyID"));
-                    this.db.mySQLHandler.Update("delete from `chatinvitations` where `ChatInviteID` like " + rs.getInt("ChatInviteID"));
+                    this.db.mySQLHandler.Update("delete from `ChatInvitations` where `ChatInviteID` like " + rs.getInt("ChatInviteID"));
                 }
             }
 
