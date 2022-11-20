@@ -16,7 +16,8 @@ import java.util.Scanner;
  * @author Nathan "Nathcat" Baines
  */
 public class MySQLHandler {
-    private final Connection conn;  // The connection to the MySQL database.
+    private Connection conn;          // The connection to the MySQL database.
+    private final JSONObject config;  // Config JSONObject
 
     /**
      * Default constructor, creates a connection to the database.
@@ -26,8 +27,12 @@ public class MySQLHandler {
         // If any of them are thrown, this object shouldn't be allowed to be created.
 
         // Get the MySQL config file
-        JSONObject config = this.GetMySQLConfig();
+        this.config = this.GetMySQLConfig();
 
+        StartConnection();
+    }
+
+    private void StartConnection() throws SQLException {
         // Create a connection to the MySQL database.
         conn = DriverManager.getConnection((String) config.get("connection_url"), (String) config.get("username"), (String) config.get("password"));
     }
@@ -56,14 +61,29 @@ public class MySQLHandler {
      * @throws SQLException Thrown by SQL errors.
      */
     protected ResultSet Select(String query) throws SQLException {
-        // Create and execute the statement
-        Statement stmt = conn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
-        stmt.execute(query);
-        // Get the result set and close the statement
-        ResultSet rs = stmt.getResultSet();
+        try {
+            // Create and execute the statement
+            Statement stmt = conn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
+            stmt.execute(query);
+            // Get the result set and close the statement
+            ResultSet rs = stmt.getResultSet();
 
-        // Return the result set
-        return rs;
+            // Return the result set
+            return rs;
+
+        } catch (SQLNonTransientConnectionException e) {
+            // Restart the connection and try again
+            StartConnection();
+
+            // Create and execute the statement
+            Statement stmt = conn.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_READ_ONLY);
+            stmt.execute(query);
+            // Get the result set and close the statement
+            ResultSet rs = stmt.getResultSet();
+
+            // Return the result set
+            return rs;
+        }
     }
 
     /**
@@ -72,12 +92,25 @@ public class MySQLHandler {
      * @throws SQLException Thrown by SQL errors
      */
     protected void Update(String query) throws SQLException {
-        // Create and execute the statement
-        Statement stmt = conn.createStatement();
-        stmt.execute(query);
+        try {
+            // Create and execute the statement
+            Statement stmt = conn.createStatement();
+            stmt.execute(query);
 
-        // Close the statement
-        stmt.close();
+            // Close the statement
+            stmt.close();
+
+        } catch (SQLNonTransientConnectionException e) {
+            // Restart the connection and try again
+            StartConnection();
+
+            // Create and execute the statement
+            Statement stmt = conn.createStatement();
+            stmt.execute(query);
+
+            // Close the statement
+            stmt.close();
+        }
     }
 
     /**
