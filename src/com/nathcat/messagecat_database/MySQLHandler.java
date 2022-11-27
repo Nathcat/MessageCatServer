@@ -1,5 +1,6 @@
 package com.nathcat.messagecat_database;
 
+import com.mysql.cj.jdbc.exceptions.CommunicationsException;
 import com.nathcat.messagecat_database_entities.*;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -71,7 +72,7 @@ public class MySQLHandler {
             // Return the result set
             return rs;
 
-        } catch (SQLNonTransientConnectionException e) {
+        } catch (CommunicationsException e) {
             // Restart the connection and try again
             StartConnection();
 
@@ -100,7 +101,7 @@ public class MySQLHandler {
             // Close the statement
             stmt.close();
 
-        } catch (SQLNonTransientConnectionException e) {
+        } catch (CommunicationsException e) {
             // Restart the connection and try again
             StartConnection();
 
