@@ -24,13 +24,13 @@ public class ChatInvite implements Serializable {
 
     @Override
     public String toString() {
-        return "ChatInvite{" +
+        return "ChatInvite {\n" +
                 "ChatInviteID=" + ChatInviteID +
-                ", ChatID=" + ChatID +
-                ", SenderID=" + SenderID +
-                ", RecipientID=" + RecipientID +
-                ", TimeSent=" + TimeSent +
-                ", PrivateKeyID=" + PrivateKeyID +
-                '}';
+                ",\nChatID=" + ChatID +
+                ",\nSenderID=" + SenderID +
+                ",\nRecipientID=" + RecipientID +
+                ",\nTimeSent=" + TimeSent +
+                ",\nPrivateKeyID=" + PrivateKeyID +
+                "\n}";
     }
 }

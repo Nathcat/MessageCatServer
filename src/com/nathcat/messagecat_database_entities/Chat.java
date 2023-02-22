@@ -20,11 +20,11 @@ public class Chat implements Serializable {
 
     @Override
     public String toString() {
-        return "Chat{" +
+        return "Chat {\n" +
                 "ChatID=" + ChatID +
-                ", Name='" + Name + '\'' +
-                ", Description='" + Description + '\'' +
-                ", PublicKeyID=" + PublicKeyID +
-                '}';
+                ",\nName='" + Name + '\'' +
+                ",\nDescription='" + Description + '\'' +
+                ",\nPublicKeyID=" + PublicKeyID +
+                "\n}";
     }
 }

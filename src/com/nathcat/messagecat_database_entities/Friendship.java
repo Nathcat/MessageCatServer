@@ -20,11 +20,11 @@ public class Friendship implements Serializable {
 
     @Override
     public String toString() {
-        return "Friendship{" +
+        return "Friendship {\n" +
                 "FriendshipID=" + FriendshipID +
-                ", UserID=" + UserID +
-                ", FriendID=" + FriendID +
-                ", DateEstablished='" + DateEstablished + '\'' +
-                '}';
+                ",\nUserID=" + UserID +
+                ",\nFriendID=" + FriendID +
+                ",\nDateEstablished='" + DateEstablished + '\'' +
+                "\n}";
     }
 }

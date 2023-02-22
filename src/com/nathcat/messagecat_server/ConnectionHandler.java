@@ -295,6 +295,10 @@ public class ConnectionHandler extends Handler {
             return null;
         }
 
+        if (result == null) {
+            return null;
+        }
+
         // Remove the password from the result/s
         if (result.getClass() == User.class) {
             result = new User(((User) result).UserID, ((User) result).Username, null, ((User) result).DisplayName, ((User) result).DateCreated, ((User) result).ProfilePicturePath);

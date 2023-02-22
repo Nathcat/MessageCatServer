@@ -22,12 +22,12 @@ public class Message implements Serializable {
 
     @Override
     public String toString() {
-        return "Message{" +
+        return "Message {\n" +
                 "SenderID=" + SenderID +
-                ", ChatID=" + ChatID +
-                ", TimeSent=" + TimeSent +
-                ", Content='" + Content + '\'' +
-                '}';
+                ",\nChatID=" + ChatID +
+                ",\nTimeSent=" + TimeSent +
+                ",\nContent='" + Content + '\'' +
+                "\n}";
     }
 
     public JSONObject GetJSONObject() {
