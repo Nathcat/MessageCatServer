@@ -162,81 +162,26 @@ public class ConnectionHandler extends Handler {
         }
 
         switch ((RequestType) request.get("type")) {
-            case Authenticate -> {
-                return this.Authenticate();
-            }
+            case Authenticate: return this.Authenticate();
+            case GetUser: return this.GetUser();
+            case GetFriendship: return this.GetFriendship();
+            case GetFriendRequests: return this.GetFriendRequests();
+            case GetChat: return this.GetChat();
+            case GetChatInvite: return this.GetChatInvite();
+            case GetPublicKey: return this.GetPublicKey();
+            case GetMessageQueue: return this.GetMessageQueue();
+            case AddUser: return this.AddUser();
+            case AddChat: return this.AddChat();
+            case AddListenRule: return this.AddListenRule();
+            case RemoveListenRule: return this.RemoveListenRule();
+            case AcceptFriendRequest: return this.AcceptFriendRequest();
+            case DeclineFriendRequest: return this.DeclineFriendRequest();
+            case AcceptChatInvite: return this.AcceptChatInvite();
+            case DeclineChatInvite: return this.DeclineChatInvite();
+            case SendMessage: return this.SendMessage();
+            case SendFriendRequest: return this.SendFriendRequest();
+            case SendChatInvite: return this.SendChatInvite();
 
-            case GetUser -> {
-                return this.GetUser();
-            }
-
-            case GetFriendship -> {
-                return this.GetFriendship();
-            }
-
-            case GetFriendRequests -> {
-                return this.GetFriendRequests();
-            }
-
-            case GetChat -> {
-                return this.GetChat();
-            }
-
-            case GetChatInvite -> {
-                return this.GetChatInvite();
-            }
-
-            case GetPublicKey -> {
-                return this.GetPublicKey();
-            }
-
-            case GetMessageQueue -> {
-                return this.GetMessageQueue();
-            }
-
-            case AddUser -> {
-                return this.AddUser();
-            }
-
-            case AddChat -> {
-                return this.AddChat();
-            }
-
-            case AddListenRule -> {
-                return this.AddListenRule();
-            }
-
-            case RemoveListenRule -> {
-                return this.RemoveListenRule();
-            }
-
-            case AcceptFriendRequest -> {
-                return this.AcceptFriendRequest();
-            }
-
-            case DeclineFriendRequest -> {
-                return this.DeclineFriendRequest();
-            }
-
-            case AcceptChatInvite -> {
-                return this.AcceptChatInvite();
-            }
-
-            case DeclineChatInvite -> {
-                return this.DeclineChatInvite();
-            }
-
-            case SendMessage -> {
-                return this.SendMessage();
-            }
-
-            case SendFriendRequest -> {
-                return this.SendFriendRequest();
-            }
-
-            case SendChatInvite -> {
-                return this.SendChatInvite();
-            }
         }
 
         return null;

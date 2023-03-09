@@ -113,6 +113,29 @@ public class KeyStore {
     }
 
     /**
+     * Add a new key pair at a given ID.
+     * @param pair The KeyPair to add
+     * @return The result code
+     */
+    public Result AddKeyPair(int id, KeyPair pair) {
+        // Create a copy of the original data
+        Object oldData = this.data.clone();
+
+        // Make the changes to the hash map
+        this.data.put(id, pair);
+
+        // Try to write the changes to the data file, or revert to the original state
+        try {
+            this.WriteToFile();
+            return Result.SUCCESS;
+
+        } catch (IOException e) {
+            this.data = (HashMap<Integer, KeyPair>) oldData;
+            return Result.FAILED;
+        }
+    }
+
+    /**
      * Remove a key pair
      * @param keyID The ID of the KeyPair object
      * @return The result code
