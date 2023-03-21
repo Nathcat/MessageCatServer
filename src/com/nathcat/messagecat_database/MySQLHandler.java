@@ -628,4 +628,14 @@ public class MySQLHandler {
                 chatInvite.PrivateKeyID + ");"
         );
     }
+
+    /**
+     * Add a connection record to the database
+     * @param ip The IP address of the client
+     * @param timestamp The timestamp of the connection
+     * @throws SQLException Thrown by SQL errors
+     */
+    public void AddConnection(String ip, String timestamp) throws SQLException {
+        this.Update("insert into `connections` (`client_ip`, `timestamp`) values ('" + ip + "', '" + timestamp + "');");
+    }
 }

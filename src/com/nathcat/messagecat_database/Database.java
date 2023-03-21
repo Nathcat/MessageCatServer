@@ -318,6 +318,19 @@ public class Database {
     }
 
     /**
+     * @see com.nathcat.messagecat_database.MySQLHandler#AddConnection(String, String)
+     */
+    public Result AddConnection(String ip, String timestamp) {
+        try {
+            this.mySQLHandler.AddConnection(ip, timestamp);
+            return Result.SUCCESS;
+
+        } catch (SQLException e){
+            return Result.FAILED;
+        }
+    }
+
+    /**
      * @see com.nathcat.messagecat_database.MessageStore#GetMessageQueue(int)
      */
     public MessageQueue GetMessageQueue(int ChatID) {

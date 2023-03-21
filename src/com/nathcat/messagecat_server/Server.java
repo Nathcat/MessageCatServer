@@ -12,6 +12,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Scanner;
 
 /**
@@ -59,6 +60,8 @@ public class Server {
                 // Accept any incoming connections
                 clientSocket = serverSocket.accept();
                 server.DebugLog("Received connection: " + clientSocket.getInetAddress().toString());
+
+                server.db.AddConnection(clientSocket.getInetAddress().toString(), new Date().toString());
 
                 // Push the connection to the queue
                 server.connectionHandlerQueueManager.queue.Push(new CloneableObject(clientSocket));
