@@ -28,4 +28,10 @@ This file specifies the configuration for the MessageCat server program. Followi
 ## Requests
 There are set request types which you should use when making a request to the server.
 
-Upon connection the client should sent their RSA public key to the server, after this the server will send it's public key to the client. After this the client will be able to send requests to the server (the server assumes all communications from this point on are encrypted).
+Upon connection the client should send their RSA public key to the server, after this the server will send it's public key to the client. After this the client will be able to send requests to the server (the server assumes all communications from this point on are encrypted).
+
+A request should be contained within an ``` org.json.simple.JSONObject ``` object, with the following fields:
+
+ - "type": ```RequestType```
+ - "data": ```Object``` general data passed to the request, different objects are required for different requests.
+ - "keyPair": ```KeyPair``` used only in some kinds of requests, does not need to be set for other types.
