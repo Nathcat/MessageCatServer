@@ -1,0 +1,1 @@
+# com.nathcat.messagecat_server.RequestType
