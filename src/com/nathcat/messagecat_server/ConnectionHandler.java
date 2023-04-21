@@ -114,7 +114,7 @@ public class ConnectionHandler extends Handler {
         try {
             this.clientKeyPair = (KeyPair) this.Receive();
 
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException | NullPointerException e) {
             this.DebugLog(e.getMessage());
             handshakeSuccessful = false;
         }
@@ -122,7 +122,7 @@ public class ConnectionHandler extends Handler {
         // Send the connection handler identifier to the client
         try {
             this.Send(this.clientKeyPair.encrypt(threadNum));
-        } catch (IOException | PublicKeyException e) {
+        } catch (IOException | PublicKeyException | NullPointerException e) {
             this.DebugLog(e.getMessage());
             handshakeSuccessful = false;
         }
