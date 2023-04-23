@@ -188,6 +188,10 @@ public class ConnectionHandler extends Handler {
     }
 
     private Object Authenticate() {
+        if (authenticated) {
+            return this.user;
+        }
+
         // Get the authentication data from the request
         User authData = (User) this.request.get("data");
 
@@ -197,15 +201,18 @@ public class ConnectionHandler extends Handler {
         // Check if the user is null (i.e. the username is incorrect)
         if (user == null) {
             this.authenticated = false;
+            this.user = null;
             return "failed";
         }
         else {  // Check the auth data is valid
             if (user.Password.contentEquals(authData.Password)) {
                 this.authenticated = true;
+                this.user = user;
                 return user;
             }
             else {
                 this.authenticated = false;
+                this.user = null;
                 return "failed";
             }
         }

@@ -8,6 +8,7 @@ import java.math.BigInteger;
 import java.net.*;
 
 import com.nathcat.RSA.*;
+import com.nathcat.messagecat_database_entities.User;
 
 /**
  * Parent class for the three handler classes
@@ -26,6 +27,7 @@ public class Handler extends Thread {
     public Server server;                  // Parent server object
     public Object queueObject;             // The object supplied to the handler from the QueueManager
     public boolean authenticated;          // Whether the connection is authenticated or not
+    public User user;                      // The currently authenticated user
     public Socket lrSocket;                // A socket specifically for communicating listen rule triggers
     public ObjectOutputStream lrOos;       // Stream to output objects to the lrSocket
 
