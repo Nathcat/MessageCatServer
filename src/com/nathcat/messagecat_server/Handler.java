@@ -16,20 +16,76 @@ import com.nathcat.messagecat_database_entities.User;
  * @author Nathan "Nathcat" Baines
  */
 public class Handler extends Thread {
-    public Socket socket;                  // The TCP/IP connection socket
-    public ObjectOutputStream oos;         // Stream to output objects to through the socket
-    public ObjectInputStream ois;          // Stream to receive objects from the socket
-    public final int threadNum;            // The thread number, used in debug messages
-    private final String className;        // The name of the class to be used in debug messages
-    public KeyPair keyPair;                // The encryption key pair to be used in communications
-    public KeyPair clientKeyPair;          // The client's encryption key pair (will only contain the public key)
-    public boolean busy = false;           // Indicates whether the handler is busy
-    public Server server;                  // Parent server object
-    public Object queueObject;             // The object supplied to the handler from the QueueManager
-    public boolean authenticated;          // Whether the connection is authenticated or not
-    public User user;                      // The currently authenticated user
-    public Socket lrSocket;                // A socket specifically for communicating listen rule triggers
-    public ObjectOutputStream lrOos;       // Stream to output objects to the lrSocket
+
+    /**
+     * The TCP/IP connection socket
+     */
+    public Socket socket;
+
+    /**
+     * Stream to output objects to through the socket
+     */
+    public ObjectOutputStream oos;
+
+    /**
+     * Stream to receive objects from the socket
+     */
+    public ObjectInputStream ois;
+
+    /**
+     * The thread number, used in debug messages
+     */
+    public final int threadNum;
+
+    /**
+     * The name of the class to be used in debug messages
+     */
+    private final String className;
+
+    /**
+     * The encryption key pair to be used in communications
+     */
+    public KeyPair keyPair;
+
+    /**
+     * The client's encryption key pair (will only contain the public key)
+     */
+    public KeyPair clientKeyPair;
+
+    /**
+     * Indicates whether the handler is busy
+     */
+    public boolean busy = false;
+
+    /**
+     * Parent server object
+     */
+    public Server server;
+
+    /**
+     * The object supplied to the handler from the QueueManager
+     */
+    public Object queueObject;
+
+    /**
+     * Whether the connection is authenticated or not
+     */
+    public boolean authenticated;
+
+    /**
+     * The currently authenticated user
+     */
+    public User user;
+
+    /**
+     * A socket specifically for communicating listen rule triggers
+     */
+    public Socket lrSocket;
+
+    /**
+     * Stream to output objects to the lrSocket
+     */
+    public ObjectOutputStream lrOos;
 
     /**
      * Constructor method, assigns private and constant fields

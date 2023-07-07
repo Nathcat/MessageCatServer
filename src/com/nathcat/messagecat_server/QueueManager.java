@@ -6,9 +6,20 @@ package com.nathcat.messagecat_server;
  * @author Nathan "Nathcat" Baines
  */
 public class QueueManager extends Thread{
-    private final Server server;   // The Server object
-    public Queue queue;            // The queue assigned to this manager
-    private final Handler[] pool;  // The handler pool assigned to this manager
+    /**
+     * The server instance
+     */
+    private final Server server;
+
+    /**
+     * The queue assigned to this manager
+     */
+    public Queue queue;
+
+    /**
+     * The handler pool assigned to this manager
+     */
+    private final Handler[] pool;
 
     /**
      * Constructor method

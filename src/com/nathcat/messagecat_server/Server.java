@@ -23,9 +23,25 @@ import java.util.Scanner;
 public class Server {
     private final int port;
     private final int maxThreadCount;
+
+    /**
+     * The pool of connection handlers
+     */
     public final Handler[] connectionHandlerPool;
+
+    /**
+     * The queue manager handling the incoming connections queue
+     */
     public final QueueManager connectionHandlerQueueManager;
+
+    /**
+     * The database instance
+     */
     public final Database db;
+
+    /**
+     * The list of listen rules in operation on the server
+     */
     public final ArrayList<ListenRule> listenRules = new ArrayList<>();
 
     /**

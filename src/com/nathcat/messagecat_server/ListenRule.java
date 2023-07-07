@@ -13,10 +13,27 @@ import java.lang.reflect.Field;
 public class ListenRule implements Serializable {
     public class IDAlreadySetException extends Exception { }
 
-    private int id = -1;                // Unique identifier for this listening rule
+    /**
+     * Unique identifier for this listening rule
+     */
+    private int id = -1;
+
+    /**
+     * The ID of the connection handler given in the handler field, this is filled by the client instead of the
+     * handler field because the client does not have access to the handler instances.
+     */
     public int connectionHandlerId = -1;
-    public ConnectionHandler handler;   // Handler which is handling the client this listen rule was created by
-    private RequestType listenForType;  // The request type which this listen rule is listening for
+
+    /**
+     * Handler which is handling the client this listen rule was created by, this is filled by the server upon receiving
+     * a ListenRule from the client with a set connectionHandlerId.
+     */
+    public ConnectionHandler handler;
+
+    /**
+     * The request type which this listen rule is listening for
+     */
+    private RequestType listenForType;
 
     // The listen rule will only be triggered if the data in fieldToMatch matches the data in objectToMatch
     private String fieldNameToMatch;
