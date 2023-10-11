@@ -7,6 +7,7 @@ It will create the following tables
  - FriendRequests
  - Chats
  - ChatInvitations
+
 The parts of the database that store encryption keys (KeyStore) and
 messages (Messages) will be stored as separate data structures.
 */
