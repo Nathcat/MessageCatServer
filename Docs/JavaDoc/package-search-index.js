@@ -1,1 +1,1 @@
-packageSearchIndex = [{"l":"All Packages","url":"allpackages-index.html"},{"l":"com.nathcat.messagecat_database"},{"l":"com.nathcat.messagecat_database_entities"},{"l":"com.nathcat.messagecat_server"}]
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"com.nathcat.messagecat_database"},{"l":"com.nathcat.messagecat_database_entities"},{"l":"com.nathcat.messagecat_server"}];updateSearchResults();
