@@ -34,8 +34,8 @@ public class MessageQueue implements Serializable {
     /**
      * Remove the item at the front of the queue
      */
-    public void Pop() {
-        this.data.Pop();
+    public Message Pop() {
+        return (Message) this.data.Pop();
     }
 
     /**
